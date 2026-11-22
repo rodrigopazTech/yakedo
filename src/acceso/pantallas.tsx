@@ -459,6 +459,14 @@ export function PantallaAjustes({
   alCancelarCierre,
   alConfirmarCierre,
   alVincular,
+  alCatalogo,
+  alNegocio,
+  alCuenta,
+  alEditarCatalogo,
+  nombreNegocio,
+  cuentaCobro,
+  cuentaNueva,
+  avisoCuenta,
 }: {
   usuario: UsuarioSesion
   metodo: MetodoEntrada
@@ -471,13 +479,21 @@ export function PantallaAjustes({
   alCancelarCierre: () => void
   alConfirmarCierre: () => void
   alVincular: () => void
+  alCatalogo?: () => void
+  alNegocio?: () => void
+  alCuenta?: () => void
+  alEditarCatalogo?: () => void
+  nombreNegocio?: string | null
+  cuentaCobro?: string | null
+  cuentaNueva?: string | null
+  avisoCuenta?: string | null
 }) {
   const entroCon = textoEntrasteCon(usuario, metodo)
 
   return (
     <main className="ajustes">
       <header className="ajustes-encabezado">
-        <button className="ajustes-catalogo" type="button">
+        <button className="ajustes-catalogo" type="button" onClick={alCatalogo}>
           <img src={iconoRegresar} alt="" width={24} height={24} />
           Catálogo
         </button>
@@ -488,14 +504,27 @@ export function PantallaAjustes({
       <div className="ajustes-contenido">
         <section className="ajustes-tarjeta" aria-label="Tu negocio">
           <h2>Tu negocio</h2>
-          <p className="ajustes-fila">
+          <button className="ajustes-fila" type="button" onClick={alNegocio}>
             <span>Negocio</span>
-            <img src={iconoChevron} alt="" width={24} height={24} />
-          </p>
-          <p className="ajustes-fila">
+            <span className="ajustes-fila-lado">
+              {nombreNegocio ? <strong>{nombreNegocio}</strong> : null}
+              <img src={iconoChevron} alt="" width={24} height={24} />
+            </span>
+          </button>
+          <button className="ajustes-fila" type="button" onClick={alCuenta}>
             <span>Cuenta para cobrar</span>
-            <img src={iconoChevron} alt="" width={24} height={24} />
-          </p>
+            <span className="ajustes-fila-lado">
+              {cuentaCobro ? <strong>{cuentaCobro}</strong> : null}
+              <img src={iconoChevron} alt="" width={24} height={24} />
+            </span>
+          </button>
+          {cuentaNueva ? (
+            <p className="ajustes-fila">
+              <span>Cuenta nueva</span>
+              <strong>{cuentaNueva}</strong>
+            </p>
+          ) : null}
+          {avisoCuenta ? <p className="ajustes-bloqueo">{avisoCuenta}</p> : null}
           {hayCobroActivo ? <p className="ajustes-bloqueo">{TEXTO_CUENTA_BLOQUEADA}</p> : null}
           <p className="ajustes-fila">
             <span>Entraste con</span>
@@ -510,10 +539,10 @@ export function PantallaAjustes({
         <section className="ajustes-tarjeta" aria-label="Catálogo">
           <h2>Catálogo</h2>
           <p>{TEXTO_CATALOGO_APOYO}</p>
-          <p className="ajustes-fila">
+          <button className="ajustes-fila" type="button" onClick={alEditarCatalogo}>
             <span>Editar catálogo</span>
             <img src={iconoChevron} alt="" width={24} height={24} />
-          </p>
+          </button>
         </section>
         <section className="ajustes-tarjeta ajustes-sesion" aria-label="Sesión">
           <h2>Sesión</h2>

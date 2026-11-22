@@ -1,9 +1,110 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Cierre temporal hasta la tarea 1.6 (reglas por negocio).
-    match /{document=**} {
+    function sesion() {
+      return request.auth != null;
+    }
+
+    function dueno(uid) {
+      return sesion() && request.auth.uid == uid;
+    }
+
+    function sinCobro(data) {
+      return !('cobroActivoId' in data) || data.cobroActivoId == null;
+    }
+
+    function cobroIgual() {
+      return (sinCobro(resource.data) ? null : resource.data.cobroActivoId)
+        == (sinCobro(request.resource.data) ? null : request.resource.data.cobroActivoId);
+    }
+
+    match /config/{documento} {
+      allow read: if sesion();
+      allow write: if false;
+    }
+
+    match /clabes/{clabe} {
       allow read, write: if false;
+    }
+
+    match /cuentasPrivadas/{uid} {
+      allow read, write: if false;
+    }
+
+    match /cuentasPey/{id} {
+      allow read, write: if false;
+    }
+
+    match /webhooks/{id} {
+      allow read, write: if false;
+    }
+
+    match /pagosSinAsignar/{id} {
+      allow read, write: if false;
+    }
+
+    match /eventosCobro/{id} {
+      allow read, write: if false;
+    }
+
+    match /negocios/{uid} {
+      allow read: if dueno(uid);
+      allow create, delete: if false;
+      allow update: if dueno(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre'])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.nombre.size() <= 40;
+
+      match /cuenta/{documento} {
+        allow read: if dueno(uid);
+        allow write: if false;
+      }
+
+      match /categorias/{id} {
+        allow read, write: if dueno(uid);
+      }
+
+      match /productos/{id} {
+        allow read, write: if dueno(uid);
+      }
+
+      match /contadores/{id} {
+        allow read, write: if dueno(uid);
+      }
+
+      match /pedidos/{pedidoId} {
+        allow read: if dueno(uid);
+        allow delete: if false;
+        allow create: if dueno(uid)
+          && request.resource.data.estado == 'Pendiente'
+          && sinCobro(request.resource.data)
+          && (!('metodo' in request.resource.data) || request.resource.data.metodo == null);
+        allow update: if dueno(uid)
+          && cobroIgual()
+          && (
+            request.resource.data.estado != 'Pagado'
+            || (
+              request.resource.data.metodo == 'efectivo'
+              && resource.data.estado != 'Pagado'
+              && resource.data.estado != 'Cancelado'
+            )
+          )
+          && (
+            request.resource.data.estado != 'Cancelado'
+            || sinCobro(resource.data)
+          );
+
+        match /cobros/{cobroId} {
+          allow read: if dueno(uid);
+          allow write: if false;
+
+          match /pagos/{pagoId} {
+            allow read: if dueno(uid);
+            allow write: if false;
+          }
+        }
+      }
     }
   }
 }

@@ -1,0 +1,42 @@
+import type { EstadoCuentaPey, NegocioGuardado, CuentaDocumento, Privado, AvisoCuenta } from "./cuenta.ts"
+
+export interface EstadoLocal {
+  negocio: NegocioGuardado | null
+  cuenta: CuentaDocumento | null
+  privado: Privado | null
+}
+
+export interface AltaPersistida {
+  uid: string
+  negocio: NegocioGuardado
+  cuenta: CuentaDocumento
+  privado: Privado
+  clabe: string
+  bankAccountIdAnterior: string | null
+}
+
+export interface NuevaPersistida {
+  uid: string
+  cuenta: CuentaDocumento
+  privado: Privado
+  clabe: string
+  clabeLiberar: string | null
+}
+
+export interface ResultadoEstado {
+  uid: string
+  cuenta: CuentaDocumento
+  aviso: AvisoCuenta
+}
+
+export interface RepositorioNegocio {
+  reservarClabe(clabe: string, uid: string): Promise<"libre" | "propia" | "ajena">
+  liberarClabe(clabe: string, uid: string): Promise<void>
+  leer(uid: string): Promise<EstadoLocal>
+  guardarAlta(datos: AltaPersistida): Promise<void>
+  guardarNueva(datos: NuevaPersistida): Promise<void>
+  fijarSeguir(uid: string, seguir: boolean): Promise<void>
+  hayCobroActivo(uid: string): Promise<boolean>
+  aplicarEstado(bankAccountId: string, estado: EstadoCuentaPey): Promise<ResultadoEstado | null>
+  tomarWebhook(id: string, tipo: string, eventoCobro: unknown | null): Promise<"nuevo" | "repetido">
+}

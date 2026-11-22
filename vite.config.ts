@@ -18,5 +18,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    globalSetup: ["./src/pruebas/emuladores.ts"],
+    hookTimeout: 120_000,
+    testTimeout: 30_000,
+    fileParallelism: false,
   },
 });

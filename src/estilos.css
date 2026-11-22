@@ -31,6 +31,11 @@
   --color-danger: #b3261e;
   --color-peligro-suave: #fef2f2;
   --color-danger-soft: #fef2f2;
+  --color-exito: #13733a;
+  --color-exito-suave: #ecfdf3;
+  --color-pendiente: #163aa8;
+  --color-pendiente-suave: #e8eefc;
+  --color-acento-suave: #eef3ff;
   --color-sobre-marca: #ffffff;
   --color-text-on-accent: #ffffff;
   --color-overlay: rgba(28, 25, 21, 0.55);
@@ -520,8 +525,25 @@ input {
   width: 100%;
   min-height: 56px;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-size: 16px;
   line-height: 24px;
+  text-align: left;
+}
+
+button.ajustes-fila {
+  cursor: pointer;
+}
+
+.ajustes-fila-lado {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .ajustes-fila span {
@@ -595,4 +617,443 @@ input {
   border: 0;
   background: var(--color-peligro-suave);
   color: var(--color-peligro);
+}
+
+.boton-continuar-espera,
+.boton-continuar:disabled {
+  opacity: 0.4;
+}
+
+.alta {
+  display: flex;
+  min-height: 100%;
+  background: var(--color-fondo);
+}
+
+.alta-marca {
+  flex: 0 0 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 64px;
+  background: var(--color-superficie-suave);
+}
+
+.alta-logo {
+  width: 117px;
+  height: 32px;
+}
+
+.alta-lema p {
+  margin: 0;
+}
+
+.alta-lema p:first-child {
+  max-width: 432px;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 40px;
+  letter-spacing: -0.96px;
+}
+
+.alta-lema p:last-child {
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--color-tinta-suave);
+}
+
+.alta-beneficios {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alta-beneficios li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.alta-formulario {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 12px 80px;
+}
+
+.alta-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 520px;
+}
+
+.alta-titulo h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.alta-titulo p,
+.alta-nota,
+.estado-cuerpo,
+.fila-estado p,
+.dialogo-negocio p,
+.venta-vacio,
+.cobrar-dividir {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--color-tinta-suave);
+}
+
+.alta-titulo p + p {
+  margin-top: 4px;
+}
+
+.campo-negocio,
+.tipo-persona {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.campo-caja {
+  height: 64px;
+  padding: 0 16px;
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.campo-caja-ok {
+  border: 2px solid var(--color-exito);
+}
+
+.campo-caja-error {
+  border: 2px solid var(--color-peligro);
+}
+
+.campo-ayuda {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-tinta-suave);
+}
+
+.campo-ayuda-ok {
+  color: var(--color-exito);
+}
+
+.campo-ayuda-error {
+  color: var(--color-peligro);
+}
+
+.enlace-ayuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  height: 48px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--color-marca);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tipo-opciones {
+  display: flex;
+  gap: 12px;
+}
+
+.opcion-persona {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  height: 72px;
+  padding: 0 16px;
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  text-align: left;
+  cursor: pointer;
+}
+
+.opcion-persona strong {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.opcion-persona span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-tinta-suave);
+}
+
+.opcion-persona-activa {
+  border: 2px solid var(--color-marca);
+  background: var(--color-acento-suave);
+}
+
+.opcion-persona-error {
+  border: 2px solid var(--color-peligro);
+}
+
+.estado,
+.venta,
+.cobrar {
+  min-height: 100%;
+  background: var(--color-fondo);
+}
+
+.estado-columna,
+.cobrar-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(640px, 100%);
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.estado-columna h1,
+.cobrar-total strong {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 40px;
+  letter-spacing: -0.64px;
+}
+
+.pastilla {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  height: 28px;
+  margin: 0;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--color-pendiente-suave);
+  color: var(--color-pendiente);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pastilla-ok {
+  background: var(--color-exito-suave);
+  color: var(--color-exito);
+}
+
+.pastilla-error {
+  background: var(--color-peligro-suave);
+  color: var(--color-peligro);
+}
+
+.estado-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  background: var(--color-superficie);
+}
+
+.estado-datos div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.estado-datos dt {
+  color: var(--color-tinta-suave);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.estado-datos dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.fila-estado {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.fila-estado strong {
+  display: block;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.venta-accion {
+  width: auto;
+  padding: 0 20px;
+}
+
+.ajustes-encabezado .venta-accion:last-child {
+  margin-left: auto;
+}
+
+.banner-revision,
+.banner-cobro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 24px;
+  padding: 16px 20px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-pendiente-suave);
+  color: var(--color-tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.banner-revision strong,
+.banner-cobro .boton-texto {
+  margin-left: auto;
+  color: var(--color-marca);
+}
+
+.venta-vacio {
+  padding: 24px;
+}
+
+.cobrar-ticket,
+.cobrar-total {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.cobrar-metodos {
+  display: flex;
+  gap: 16px;
+}
+
+.metodo-pago {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 180px;
+  padding: 24px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: 24px;
+  background: var(--color-superficie);
+  text-align: left;
+  cursor: pointer;
+}
+
+.metodo-pago strong {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.metodo-pago span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-tinta-suave);
+}
+
+.metodo-pago-apagado {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cuenta-actual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  background: var(--color-superficie);
+}
+
+.cuenta-actual strong {
+  width: 100%;
+}
+
+.dialogo-negocio {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(520px, calc(100% - 48px));
+  padding: 32px;
+  border-radius: 24px;
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-dialogo);
+}
+
+.dialogo-negocio h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.dialogo-cuenta {
+  font-weight: 600;
+  color: var(--color-tinta);
+}
+
+.toast-cuenta {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 420px;
+  margin: 0;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: var(--color-tinta);
+  color: var(--color-sobre-marca);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  box-shadow: var(--sombra-toast);
+}
+
+.ajustes-regreso-boton {
+  width: auto;
 }

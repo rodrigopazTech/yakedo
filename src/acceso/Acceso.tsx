@@ -1,7 +1,7 @@
+import { Aplicacion } from "../negocio/Aplicacion.tsx"
 import { formatearTelefonoVisible, aE164 } from "./numero.ts"
 import {
   PantallaArranque,
-  PantallaAjustes,
   PantallaBienvenida,
   PantallaCodigo,
   PantallaConfirmaCorreo,
@@ -110,7 +110,7 @@ export function Acceso({
   }
 
   return (
-    <PantallaAjustes
+    <Aplicacion
       usuario={vista.usuario}
       metodo={vista.metodo}
       hayCobroActivo={vista.hayCobroActivo}
