@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from "react"
 import logoGoogle from "./activos/google-g.png"
 import iconoAlerta from "./activos/icono-alerta.svg"
 import iconoCerrar from "./activos/icono-cerrar-sesion.svg"
+import iconoChevron from "./activos/icono-chevron.svg"
 import iconoApp from "./activos/icono-yakedo.svg"
 import iconoRegresar from "./activos/icono-regresar.svg"
 import iconoReloj from "./activos/icono-reloj.svg"
@@ -10,33 +11,42 @@ import logoYakedo from "./activos/logo-yakedo.svg"
 import { formatearNumero } from "./numero.ts"
 import { textoDeCierre, textoEntrasteCon } from "./sesion.ts"
 import {
-  TEXTO_AVISO_CORREO,
-  TEXTO_AVISO_LISTO,
-  TEXTO_AVISO_OTRA_VEZ,
-  TEXTO_AVISO_SEGUIR,
+  TEXTO_AVISO_PRIVACIDAD,
   TEXTO_AYUDA_CODIGO,
   TEXTO_AYUDA_NUMERO,
   TEXTO_AYUDA_NUMERO_PARCIAL,
   TEXTO_AYUDA_REENVIO,
+  TEXTO_CAMBIAR_CORREO,
   TEXTO_CATALOGO_APOYO,
   TEXTO_CIERRE_TITULO,
   TEXTO_CODIGO_VENCIDO,
-  TEXTO_CUENTA_BLOQUEADA,
+  TEXTO_CONFIRMA_BOTON,
+  TEXTO_CONFIRMA_TITULO,
   TEXTO_CORREO_APOYO,
   TEXTO_CORREO_BOTON,
-  TEXTO_CORREO_DE_GOOGLE_APOYO,
-  TEXTO_CORREO_DE_GOOGLE_TITULO,
   TEXTO_CORREO_ETIQUETA,
   TEXTO_CORREO_TITULO,
-  TEXTO_ENLAZAR_GOOGLE_APOYO,
-  TEXTO_ENLAZAR_GOOGLE_TITULO,
+  TEXTO_CUENTA_BLOQUEADA,
+  TEXTO_CUENTAS_DISTINTAS,
+  TEXTO_CUENTAS_DISTINTAS_APOYO,
+  TEXTO_ENTENDIDO,
+  TEXTO_ENVIANDO,
   TEXTO_ESLOGAN,
-  TEXTO_FALTA_CONFIRMAR_CORREO,
+  TEXTO_FALLO_ENVIO,
+  TEXTO_MISMA_CUENTA,
+  TEXTO_MISMA_CUENTA_APOYO,
   TEXTO_REENVIAR,
+  TEXTO_SEGUIR_CUENTA,
+  TEXTO_SIN_RED,
+  TEXTO_SIN_RED_TITULO,
+  TEXTO_TERMINOS,
   TEXTO_VINCULAR_APOYO,
   TEXTO_VINCULAR_NUMERO,
+  TEXTO_VINCULAR_TITULO,
+  textoGoogleCuenta,
+  textoTuCuenta,
 } from "./textos.ts"
-import type { MetodoEntrada, UsuarioSesion } from "./tipos.ts"
+import type { DialogoAcceso, MetodoEntrada, UsuarioSesion } from "./tipos.ts"
 
 export function PantallaArranque() {
   return (
@@ -45,6 +55,76 @@ export function PantallaArranque() {
       <img className="arranque-logo" src={logoInverso} alt="Yakedo" width={264} height={72} />
       <p>{TEXTO_ESLOGAN}</p>
     </main>
+  )
+}
+
+function Enlace({ children }: { children: string }) {
+  return (
+    <button className="enlace" type="button">
+      {children}
+    </button>
+  )
+}
+
+function AvisoLegal() {
+  return (
+    <p className="acceso-legal">
+      Al entrar aceptas los <Enlace>{TEXTO_TERMINOS}</Enlace> y el{" "}
+      <Enlace>{TEXTO_AVISO_PRIVACIDAD}</Enlace>.
+    </p>
+  )
+}
+
+function DialogoSobreAcceso({
+  dialogo,
+  alCerrar,
+  alContinuar,
+}: {
+  dialogo: DialogoAcceso
+  alCerrar: () => void
+  alContinuar: () => void
+}) {
+  const titulo =
+    dialogo.tipo === "sin-red"
+      ? TEXTO_SIN_RED_TITULO
+      : dialogo.tipo === "coincide"
+        ? TEXTO_MISMA_CUENTA
+        : TEXTO_CUENTAS_DISTINTAS
+  const apoyo =
+    dialogo.tipo === "sin-red"
+      ? TEXTO_SIN_RED
+      : dialogo.tipo === "coincide"
+        ? TEXTO_MISMA_CUENTA_APOYO
+        : TEXTO_CUENTAS_DISTINTAS_APOYO
+
+  return (
+    <div className="ajustes-velo" role="presentation">
+      <div className="dialogo-cierre" role="dialog" aria-modal="true" aria-labelledby="titulo-dialogo">
+        <h2 id="titulo-dialogo">{titulo}</h2>
+        <p className="dialogo-cuerpo">{apoyo}</p>
+        {dialogo.tipo === "coincide" ? <p className="dialogo-dato">{dialogo.correo}</p> : null}
+        {dialogo.tipo === "distintas" ? (
+          <div className="dialogo-dato">
+            <p>{textoTuCuenta(dialogo.cuenta)}</p>
+            <p>{textoGoogleCuenta(dialogo.google)}</p>
+          </div>
+        ) : null}
+        {dialogo.tipo === "distintas" ? (
+          <div className="dialogo-acciones dialogo-acciones-columna">
+            <button className="boton-principal" type="button" onClick={alCerrar}>
+              {TEXTO_SEGUIR_CUENTA}
+            </button>
+            <button className="boton-secundario" type="button" onClick={alCerrar}>
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <button className="boton-principal" type="button" onClick={dialogo.tipo === "coincide" ? alContinuar : alCerrar}>
+            {dialogo.tipo === "coincide" ? TEXTO_CORREO_BOTON : TEXTO_ENTENDIDO}
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -78,15 +158,19 @@ function Marco({
 }
 
 export function PantallaBienvenida({
-  error,
   ocupado,
+  dialogo,
   alNumero,
   alGoogle,
+  alCerrarDialogo,
+  alContinuarCoincidencia,
 }: {
-  error: string | null
   ocupado: boolean
+  dialogo: DialogoAcceso | null
   alNumero: () => void
   alGoogle: () => void
+  alCerrarDialogo: () => void
+  alContinuarCoincidencia: () => void
 }) {
   return (
     <Marco bienvenida arriba={false}>
@@ -106,10 +190,11 @@ export function PantallaBienvenida({
           Continuar con Google
         </button>
         <p className="acceso-legal">¿Primera vez? Entra igual y luego das de alta tu CLABE.</p>
-        <p className="acceso-legal">Al entrar aceptas los Términos y el Aviso de privacidad.</p>
-        {/* UI PROVISIONAL: falta en Figma el fallo de red o de configuración */}
-        {error ? <p className="acceso-error">{error}</p> : null}
+        <AvisoLegal />
       </div>
+      {dialogo ? (
+        <DialogoSobreAcceso dialogo={dialogo} alCerrar={alCerrarDialogo} alContinuar={alContinuarCoincidencia} />
+      ) : null}
     </Marco>
   )
 }
@@ -144,12 +229,9 @@ export function PantallaNumero({
           <img src={iconoRegresar} alt="" width={22} height={22} />
           Regresar
         </button>
-        {/* UI PROVISIONAL: falta en Figma el título de vinculación */}
-        <h2>{vinculando ? "Vincula tu número" : "¿Cuál es tu número?"}</h2>
+        <h2>{vinculando ? TEXTO_VINCULAR_TITULO : "¿Cuál es tu número?"}</h2>
         <p className="acceso-subtitulo">
-          {vinculando
-            ? TEXTO_VINCULAR_APOYO
-            : "Te mandamos un código por SMS para entrar."}
+          {vinculando ? TEXTO_VINCULAR_APOYO : "Te mandamos un código por SMS para entrar."}
         </p>
         <label className="acceso-campo">
           <span>Número de celular</span>
@@ -165,7 +247,7 @@ export function PantallaNumero({
         </label>
         {error ? (
           <p className="acceso-error" role="alert">
-            <img src={iconoAlerta} alt="" width={20} height={20} />
+            {error === TEXTO_FALLO_ENVIO ? null : <img src={iconoAlerta} alt="" width={20} height={20} />}
             {error}
           </p>
         ) : (
@@ -179,7 +261,7 @@ export function PantallaNumero({
           aria-disabled={digitos.length !== 10 || ocupado}
           disabled={ocupado}
         >
-          Enviar código
+          {ocupado ? TEXTO_ENVIANDO : "Enviar código"}
         </button>
       </form>
     </Marco>
@@ -244,7 +326,7 @@ export function PantallaCodigo({
         </div>
         {error ? (
           <p className="acceso-error" role="alert">
-            <img src={iconoAlerta} alt="" width={20} height={20} />
+            {error === TEXTO_FALLO_ENVIO ? null : <img src={iconoAlerta} alt="" width={20} height={20} />}
             {error}
           </p>
         ) : (
@@ -269,22 +351,27 @@ export function PantallaCodigo({
   )
 }
 
-// UI PROVISIONAL: falta en Figma
 export function PantallaCorreo({
   valor,
   error,
   ocupado,
+  dialogo,
   alCambiar,
   alGuardar,
+  alCerrarDialogo,
+  alContinuarCoincidencia,
 }: {
   valor: string
   error: string | null
   ocupado: boolean
+  dialogo: DialogoAcceso | null
   alCambiar: (valor: string) => void
   alGuardar: () => void
+  alCerrarDialogo: () => void
+  alContinuarCoincidencia: () => void
 }) {
   return (
-    <Marco bienvenida={false} arriba>
+    <Marco bienvenida arriba={false}>
       <form
         className="acceso-columna"
         onSubmit={(evento) => {
@@ -296,7 +383,7 @@ export function PantallaCorreo({
         <p className="acceso-subtitulo">{TEXTO_CORREO_APOYO}</p>
         <label className="acceso-campo">
           <span>{TEXTO_CORREO_ETIQUETA}</span>
-          <span className="acceso-entrada">
+          <span className="acceso-entrada acceso-entrada-correo">
             <input
               type="email"
               autoComplete="email"
@@ -313,69 +400,49 @@ export function PantallaCorreo({
         <button className="boton-principal" type="submit" disabled={ocupado}>
           {TEXTO_CORREO_BOTON}
         </button>
+        <AvisoLegal />
       </form>
+      {dialogo ? (
+        <DialogoSobreAcceso dialogo={dialogo} alCerrar={alCerrarDialogo} alContinuar={alContinuarCoincidencia} />
+      ) : null}
     </Marco>
   )
 }
 
-// UI PROVISIONAL: falta en Figma
-export function PantallaAvisoCorreo({
+export function PantallaConfirmaCorreo({
+  valor,
   ocupado,
-  alReenviar,
+  dialogo,
   alConfirmar,
-  alSeguir,
+  alCambiar,
+  alCerrarDialogo,
+  alContinuarCoincidencia,
 }: {
+  valor: string
   ocupado: boolean
-  alReenviar: () => void
+  dialogo: DialogoAcceso | null
   alConfirmar: () => void
-  alSeguir: () => void
+  alCambiar: () => void
+  alCerrarDialogo: () => void
+  alContinuarCoincidencia: () => void
 }) {
   return (
-    <Marco bienvenida={false} arriba>
+    <Marco bienvenida arriba={false}>
       <div className="acceso-columna">
-        <h2>{TEXTO_CORREO_TITULO}</h2>
-        <p className="acceso-subtitulo">{TEXTO_AVISO_CORREO}</p>
+        <h2>{TEXTO_CONFIRMA_TITULO}</h2>
+        <p className="acceso-subtitulo">{TEXTO_CORREO_APOYO}</p>
+        <p className="acceso-correo">{valor}</p>
         <button className="boton-principal" type="button" onClick={alConfirmar} disabled={ocupado}>
-          {TEXTO_AVISO_LISTO}
+          {TEXTO_CONFIRMA_BOTON}
         </button>
-        <button className="boton-texto" type="button" onClick={alReenviar} disabled={ocupado}>
-          {TEXTO_AVISO_OTRA_VEZ}
+        <button className="boton-fantasma" type="button" onClick={alCambiar}>
+          {TEXTO_CAMBIAR_CORREO}
         </button>
-        <button className="boton-texto" type="button" onClick={alSeguir}>
-          {TEXTO_AVISO_SEGUIR}
-        </button>
+        <AvisoLegal />
       </div>
-    </Marco>
-  )
-}
-
-// UI PROVISIONAL: falta en Figma
-export function PantallaCorreoDeGoogle({ alGoogle, ocupado }: { alGoogle: () => void; ocupado: boolean }) {
-  return (
-    <Marco bienvenida={false} arriba>
-      <div className="acceso-columna">
-        <h2>{TEXTO_CORREO_DE_GOOGLE_TITULO}</h2>
-        <p className="acceso-subtitulo">{TEXTO_CORREO_DE_GOOGLE_APOYO}</p>
-        <button className="boton-google" type="button" onClick={alGoogle} disabled={ocupado}>
-          <img src={logoGoogle} alt="" width={24} height={24} />
-          Continuar con Google
-        </button>
-      </div>
-    </Marco>
-  )
-}
-
-// UI PROVISIONAL: falta en Figma
-export function PantallaEnlazarGoogle({ alNumero }: { alNumero: () => void }) {
-  return (
-    <Marco bienvenida={false} arriba>
-      <div className="acceso-columna">
-        <h2>{TEXTO_ENLAZAR_GOOGLE_TITULO}</h2>
-        <p className="acceso-subtitulo">{TEXTO_ENLAZAR_GOOGLE_APOYO}</p>
-        <button className="boton-principal" type="button" onClick={alNumero}>
-          Entrar con tu número
-        </button>
-      </div>
+      {dialogo ? (
+        <DialogoSobreAcceso dialogo={dialogo} alCerrar={alCerrarDialogo} alContinuar={alContinuarCoincidencia} />
+      ) : null}
     </Marco>
   )
 }
@@ -387,13 +454,11 @@ export function PantallaAjustes({
   avisoCierre,
   confirmarCierre,
   textoCierre,
-  faltaConfirmarCorreo,
   ocupado,
   alPedirCierre,
   alCancelarCierre,
   alConfirmarCierre,
   alVincular,
-  alReenviarAviso,
 }: {
   usuario: UsuarioSesion
   metodo: MetodoEntrada
@@ -401,20 +466,21 @@ export function PantallaAjustes({
   avisoCierre: string | null
   confirmarCierre: boolean
   textoCierre: string
-  faltaConfirmarCorreo: boolean
   ocupado: boolean
   alPedirCierre: () => void
   alCancelarCierre: () => void
   alConfirmarCierre: () => void
   alVincular: () => void
-  alReenviarAviso: () => void
 }) {
   const entroCon = textoEntrasteCon(usuario, metodo)
 
   return (
     <main className="ajustes">
       <header className="ajustes-encabezado">
-        <p className="ajustes-regreso">Catálogo</p>
+        <button className="ajustes-catalogo" type="button">
+          <img src={iconoRegresar} alt="" width={24} height={24} />
+          Catálogo
+        </button>
         <div>
           <h1>Ajustes</h1>
         </div>
@@ -423,36 +489,32 @@ export function PantallaAjustes({
         <section className="ajustes-tarjeta" aria-label="Tu negocio">
           <h2>Tu negocio</h2>
           <p className="ajustes-fila">
+            <span>Negocio</span>
+            <img src={iconoChevron} alt="" width={24} height={24} />
+          </p>
+          <p className="ajustes-fila">
+            <span>Cuenta para cobrar</span>
+            <img src={iconoChevron} alt="" width={24} height={24} />
+          </p>
+          {hayCobroActivo ? <p className="ajustes-bloqueo">{TEXTO_CUENTA_BLOQUEADA}</p> : null}
+          <p className="ajustes-fila">
             <span>Entraste con</span>
             <strong>{entroCon}</strong>
           </p>
-          {hayCobroActivo ? <p className="ajustes-bloqueo">{TEXTO_CUENTA_BLOQUEADA}</p> : null}
+          {!usuario.telefono ? (
+            <button className="boton-principal" type="button" onClick={alVincular}>
+              {TEXTO_VINCULAR_NUMERO}
+            </button>
+          ) : null}
         </section>
         <section className="ajustes-tarjeta" aria-label="Catálogo">
           <h2>Catálogo</h2>
           <p>{TEXTO_CATALOGO_APOYO}</p>
           <p className="ajustes-fila">
             <span>Editar catálogo</span>
+            <img src={iconoChevron} alt="" width={24} height={24} />
           </p>
         </section>
-        {!usuario.telefono ? (
-          // UI PROVISIONAL: falta en Figma
-          <section className="ajustes-tarjeta ajustes-vincular">
-            <p>{TEXTO_VINCULAR_APOYO}</p>
-            <button className="boton-principal" type="button" onClick={alVincular}>
-              {TEXTO_VINCULAR_NUMERO}
-            </button>
-          </section>
-        ) : null}
-        {faltaConfirmarCorreo || (usuario.correo && !usuario.correoVerificado) ? (
-          // UI PROVISIONAL: falta en Figma
-          <section className="ajustes-tarjeta ajustes-vincular">
-            <p>{TEXTO_FALTA_CONFIRMAR_CORREO}</p>
-            <button className="boton-texto" type="button" onClick={alReenviarAviso} disabled={ocupado}>
-              {TEXTO_AVISO_OTRA_VEZ}
-            </button>
-          </section>
-        ) : null}
         <section className="ajustes-tarjeta ajustes-sesion" aria-label="Sesión">
           <h2>Sesión</h2>
           <p>Ciérrala si vas a prestar o cambiar la tablet.</p>

@@ -2,12 +2,10 @@ import { formatearTelefonoVisible, aE164 } from "./numero.ts"
 import {
   PantallaArranque,
   PantallaAjustes,
-  PantallaAvisoCorreo,
   PantallaBienvenida,
   PantallaCodigo,
+  PantallaConfirmaCorreo,
   PantallaCorreo,
-  PantallaCorreoDeGoogle,
-  PantallaEnlazarGoogle,
   PantallaNumero,
 } from "./pantallas.tsx"
 import type { ServicioAuth } from "./tipos.ts"
@@ -30,10 +28,12 @@ export function Acceso({
   if (paso.nombre === "bienvenida") {
     return (
       <PantallaBienvenida
-        error={paso.error}
         ocupado={vista.ocupado}
+        dialogo={vista.dialogo}
         alNumero={vista.entrarConNumero}
         alGoogle={vista.entrarConGoogle}
+        alCerrarDialogo={vista.cerrarDialogo}
+        alContinuarCoincidencia={vista.continuarCoincidencia}
       />
     )
   }
@@ -73,38 +73,38 @@ export function Acceso({
         valor={paso.valor}
         error={paso.error}
         ocupado={vista.ocupado}
+        dialogo={vista.dialogo}
         alCambiar={vista.escribirCorreo}
         alGuardar={vista.guardarCorreo}
+        alCerrarDialogo={vista.cerrarDialogo}
+        alContinuarCoincidencia={vista.continuarCoincidencia}
       />
     )
   }
 
-  if (paso.nombre === "aviso-correo") {
+  if (paso.nombre === "confirma-correo") {
     return (
-      <PantallaAvisoCorreo
+      <PantallaConfirmaCorreo
+        valor={paso.valor}
         ocupado={vista.ocupado}
-        alReenviar={vista.reenviarAviso}
-        alConfirmar={vista.yaConfirmeAviso}
-        alSeguir={vista.seguirDespuesDelAviso}
+        dialogo={vista.dialogo}
+        alConfirmar={vista.guardarCorreo}
+        alCambiar={vista.volver}
+        alCerrarDialogo={vista.cerrarDialogo}
+        alContinuarCoincidencia={vista.continuarCoincidencia}
       />
     )
-  }
-
-  if (paso.nombre === "correo-de-google") {
-    return <PantallaCorreoDeGoogle ocupado={vista.ocupado} alGoogle={vista.entrarConGoogle} />
-  }
-
-  if (paso.nombre === "enlazar-google") {
-    return <PantallaEnlazarGoogle alNumero={vista.entrarConNumero} />
   }
 
   if (!vista.usuario || !vista.metodo || !vista.textoCierre) {
     return (
       <PantallaBienvenida
-        error={null}
         ocupado={vista.ocupado}
+        dialogo={vista.dialogo}
         alNumero={vista.entrarConNumero}
         alGoogle={vista.entrarConGoogle}
+        alCerrarDialogo={vista.cerrarDialogo}
+        alContinuarCoincidencia={vista.continuarCoincidencia}
       />
     )
   }
@@ -117,13 +117,11 @@ export function Acceso({
       avisoCierre={vista.avisoCierre}
       confirmarCierre={paso.confirmarCierre}
       textoCierre={vista.textoCierre}
-      faltaConfirmarCorreo={vista.faltaConfirmarCorreo}
       ocupado={vista.ocupado}
       alPedirCierre={vista.pedirCierre}
       alCancelarCierre={vista.cancelarCierre}
       alConfirmarCierre={vista.confirmarCierre}
       alVincular={vista.empezarVinculo}
-      alReenviarAviso={vista.reenviarAviso}
     />
   )
 }
