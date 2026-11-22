@@ -39,6 +39,8 @@
   --color-sobre-marca: #ffffff;
   --color-text-on-accent: #ffffff;
   --color-overlay: rgba(28, 25, 21, 0.55);
+  --sombra-dialogo: 0 8px 24px 0 rgba(28, 25, 21, 0.18);
+  --sombra-toast: 0 6px 20px rgba(0, 0, 0, 0.2);
   --fuente-sans: "Plus Jakarta Sans", sans-serif;
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --fuente-google: "Roboto", sans-serif;
@@ -170,6 +172,31 @@ input {
   font-weight: 700;
   line-height: 32px;
   letter-spacing: -0.24px;
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--color-marca);
+  font-family: var(--fuente-sans);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.acceso-correo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
 }
 
 .acceso-legal,
@@ -338,6 +365,15 @@ input {
   border-color: var(--color-peligro);
 }
 
+.acceso-entrada-correo {
+  border: 1.5px solid var(--color-borde-fuerte);
+}
+
+.acceso-entrada-correo input {
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
 .acceso-prefijo {
   display: flex;
   align-items: center;
@@ -431,8 +467,7 @@ input {
   border-bottom: 1px solid var(--color-borde);
 }
 
-.ajustes-encabezado h1,
-.ajustes-tarjeta h2 {
+.ajustes-encabezado h1 {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
@@ -440,11 +475,27 @@ input {
   letter-spacing: -0.24px;
 }
 
-.ajustes-regreso {
+.ajustes-tarjeta h2 {
   margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.ajustes-catalogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px 0 12px;
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  color: var(--color-tinta);
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
+  cursor: pointer;
 }
 
 .ajustes-contenido {
@@ -468,12 +519,31 @@ input {
 
 .ajustes-fila {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   width: 100%;
+  min-height: 56px;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-size: 16px;
   line-height: 24px;
+  text-align: left;
+}
+
+button.ajustes-fila {
+  cursor: pointer;
+}
+
+.ajustes-fila-lado {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .ajustes-fila span {
@@ -505,6 +575,28 @@ input {
   padding: 32px;
   border-radius: 24px;
   background: var(--color-superficie);
+  box-shadow: var(--sombra-dialogo);
+}
+
+.dialogo-cuerpo,
+.dialogo-dato {
+  margin: 0;
+  color: var(--color-tinta);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.dialogo-dato,
+.dialogo-dato p {
+  font-weight: 600;
+}
+
+.dialogo-dato p {
+  margin: 0;
+}
+
+.dialogo-dato p + p {
+  font-weight: 500;
 }
 
 .dialogo-acciones {
@@ -515,6 +607,10 @@ input {
 
 .dialogo-acciones button {
   flex: 1;
+}
+
+.dialogo-acciones-columna {
+  flex-direction: column;
 }
 
 .boton-confirmar-cierre {
@@ -900,42 +996,6 @@ input {
   cursor: not-allowed;
 }
 
-.filas-negocio {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.fila-ajuste {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 56px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-
-.fila-ajuste span {
-  color: var(--color-tinta-suave);
-  font-size: 16px;
-}
-
-.fila-ajuste strong {
-  margin-left: auto;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.fila-ajuste-fija {
-  cursor: default;
-}
-
 .cuenta-actual {
   display: flex;
   flex-wrap: wrap;
@@ -960,7 +1020,7 @@ input {
   padding: 32px;
   border-radius: 24px;
   background: var(--color-superficie);
-  box-shadow: 0 24px 48px rgba(28, 25, 21, 0.16);
+  box-shadow: var(--sombra-dialogo);
 }
 
 .dialogo-negocio h2 {
@@ -991,7 +1051,7 @@ input {
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
-  box-shadow: 0 16px 32px rgba(28, 25, 21, 0.24);
+  box-shadow: var(--sombra-toast);
 }
 
 .ajustes-regreso-boton {

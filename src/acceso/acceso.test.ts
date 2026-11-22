@@ -41,8 +41,10 @@ import {
 import type { ServicioAuth, UsuarioSesion } from "./tipos.ts"
 
 const pantallas = readFileSync(new URL("./pantallas.tsx", import.meta.url), "utf8")
+const acceso = readFileSync(new URL("./usar-acceso.ts", import.meta.url), "utf8")
 const textosFuente = readFileSync(new URL("./textos.ts", import.meta.url), "utf8")
 const firebase = readFileSync(new URL("../firebase.ts", import.meta.url), "utf8")
+const estilos = readFileSync(new URL("../estilos.css", import.meta.url), "utf8")
 const servicio = readFileSync(new URL("./servicio-firebase.ts", import.meta.url), "utf8")
 
 function usuario(parcial: Partial<UsuarioSesion> = {}): UsuarioSesion {
@@ -158,13 +160,13 @@ describe("correo, Google y cierre", () => {
     expect(resultado).toEqual({ tipo: "invalido", error: TEXTO_CORREO_INVALIDO })
   })
 
-  it("con Google muestra el correo, aunque el archivo de Figma ponga un teléfono", () => {
+  it("con Google muestra Google y el correo", () => {
     const persona = usuario({
       correo: "ana@comercio.mx",
       telefono: "+525512345678",
       proveedores: ["telefono", "google"],
     })
-    expect(textoEntrasteCon(persona, "google")).toBe("ana@comercio.mx")
+    expect(textoEntrasteCon(persona, "google")).toBe("Google · ana@comercio.mx")
     expect(textoEntrasteCon(persona, "telefono")).toBe("+52 55 1234 5678")
   })
 
@@ -212,16 +214,29 @@ describe("diseño y sesión en el cliente", () => {
     }
   })
 
-  it("arma las pantallas que sí están en Figma y marca las que faltan", () => {
+  it("arma las pantallas aprobadas y deja provisional solo el correo mal escrito", () => {
     expect(pantallas).toContain("¿Cuál es tu número?")
     expect(pantallas).toContain("TEXTO_REENVIAR")
+    expect(pantallas).toContain("TEXTO_CORREO_TITULO")
+    expect(pantallas).toContain("TEXTO_CONFIRMA_TITULO")
+    expect(pantallas).toContain("TEXTO_MISMA_CUENTA")
+    expect(pantallas).toContain("TEXTO_CUENTAS_DISTINTAS")
+    expect(pantallas).toContain("TEXTO_VINCULAR_TITULO")
+    expect(pantallas).toContain("TEXTO_ENVIANDO")
+    expect(pantallas).toContain("TEXTO_FALLO_ENVIO")
+    expect(acceso).toContain("TEXTO_FALLO_VERIFICACION")
+    expect(pantallas).toContain("TEXTO_SIN_RED_TITULO")
     expect(pantallas).toContain("TEXTO_ESLOGAN")
     expect(textosFuente).toContain("Reenviar código")
     expect(textosFuente).toContain("Cobras, cae, ya quedó.")
+    expect(textosFuente).toContain("Lo usamos para avisarte y para entrar con Google.")
     expect(pantallas).toContain("Editar catálogo")
     expect(pantallas).not.toContain("Pedir otro código")
     expect(pantallas).not.toContain("Cafetería La Esquina")
-    expect(pantallas).toContain("UI PROVISIONAL: falta en Figma")
+    expect(pantallas).not.toContain("UI PROVISIONAL")
+    expect(textosFuente).toContain("TEXTO PROVISIONAL: falta en Figma el correo mal escrito")
+    expect(estilos).toContain("--sombra-dialogo: 0 8px 24px 0 rgba(28, 25, 21, 0.18)")
+    expect(estilos).toContain("--sombra-toast: 0 6px 20px rgba(0, 0, 0, 0.2)")
   })
 
   it("guarda la sesión en el navegador y manda el reCAPTCHA invisible", () => {

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { PantallaAjustes } from "../acceso/pantallas.tsx"
-import { TEXTO_CUENTA_BLOQUEADA } from "../acceso/textos.ts"
 import type { MetodoEntrada, UsuarioSesion } from "../acceso/tipos.ts"
 import { datosDeFirebase } from "../firebase.ts"
 import {
@@ -14,7 +13,7 @@ import {
   vistaAlta,
   type TipoPersona,
 } from "./dominio/alta.ts"
-import { revisarClabe, soloNumeros } from "./dominio/clabe.ts"
+import { cuentaVisible, revisarClabe, soloNumeros } from "./dominio/clabe.ts"
 import { motivoCobroApagado, puedeCambiarClabe, tramiteAbierto, type CuentaDocumento, type NegocioGuardado } from "./dominio/cuenta.ts"
 import {
   AvisoCuenta,
@@ -22,7 +21,6 @@ import {
   DialogoConfirmarCambio,
   DialogoFalloCuenta,
   DialogoSeguir,
-  FilasNegocio,
   MarcoCargando,
   PantallaAlta,
   PantallaCambiar,
@@ -42,13 +40,11 @@ export function Aplicacion({
   avisoCierre,
   confirmarCierre,
   textoCierre,
-  faltaConfirmarCorreo,
   ocupado,
   alPedirCierre,
   alCancelarCierre,
   alConfirmarCierre,
   alVincular,
-  alReenviarAviso,
 }: {
   usuario: UsuarioSesion
   metodo: MetodoEntrada
@@ -56,13 +52,11 @@ export function Aplicacion({
   avisoCierre: string | null
   confirmarCierre: boolean
   textoCierre: string
-  faltaConfirmarCorreo: boolean
   ocupado: boolean
   alPedirCierre: () => void
   alCancelarCierre: () => void
   alConfirmarCierre: () => void
   alVincular: () => void
-  alReenviarAviso: () => void
 }) {
   const servicio = useMemo<ServicioNegocio | null>(() => {
     const firebase = datosDeFirebase()
@@ -312,34 +306,36 @@ export function Aplicacion({
           avisoCierre={avisoCierre}
           confirmarCierre={confirmarCierre}
           textoCierre={textoCierre}
-          faltaConfirmarCorreo={faltaConfirmarCorreo}
           ocupado={ocupado}
           alPedirCierre={alPedirCierre}
           alCancelarCierre={alCancelarCierre}
           alConfirmarCierre={alConfirmarCierre}
           alVincular={alVincular}
-          alReenviarAviso={alReenviarAviso}
           alCatalogo={() => setVista("venta")}
-          seccionNegocio={
-            <FilasNegocio
-              negocio={negocio}
-              actual={cuenta?.actual ?? null}
-              nueva={cuenta?.nueva ?? null}
-              puedeCambiar={cambio === "ok"}
-              avisoBloqueo={cambio === "cobro" ? TEXTO_CUENTA_BLOQUEADA : cambio === "tramite" ? TEXTO_TRAMITE : null}
-              alNombre={() => {
-                setNombre(negocio.nombre)
-                setIntento(false)
-                setAviso(null)
-                setVista("nombre")
-              }}
-              alCambiar={() => {
-                setClabe("")
-                setAviso(null)
-                setVista("cambiar")
-              }}
-            />
+          alEditarCatalogo={() => setVista("venta")}
+          nombreNegocio={negocio.nombre}
+          cuentaCobro={cuenta?.actual ? cuentaVisible(cuenta.actual.banco, cuenta.actual.ultimos4) : null}
+          cuentaNueva={
+            cuenta?.nueva && (cuenta.nueva.estado === "PENDING" || cuenta.nueva.estado === "PROCESSING")
+              ? `${cuenta.nueva.banco} · CLABE •••• ${cuenta.nueva.ultimos4} · En trámite`
+              : null
           }
+          avisoCuenta={cambio === "tramite" ? TEXTO_TRAMITE : null}
+          alNegocio={() => {
+            setNombre(negocio.nombre)
+            setIntento(false)
+            setAviso(null)
+            setVista("nombre")
+          }}
+          alCuenta={() => {
+            if (cambio === "ok") {
+              setClabe("")
+              setAviso(null)
+              setVista("cambiar")
+              return
+            }
+            if (cambio === "sin-activa") setVista("estado")
+          }}
         />
       ) : null}
       {ayuda ? <DialogoAyudaClabe alCerrar={() => setAyuda(false)} /> : null}

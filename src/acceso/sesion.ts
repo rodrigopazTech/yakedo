@@ -48,7 +48,9 @@ export function inferirMetodo(usuario: UsuarioSesion): MetodoEntrada {
  * en «Entraste con»; ese valor está mal en el archivo.
  */
 export function textoEntrasteCon(usuario: UsuarioSesion, metodo: MetodoEntrada): string {
-  if (metodo === "google") return usuario.correo ?? ""
+  if (metodo === "google") {
+    return usuario.correo ? `Google · ${usuario.correo}` : "Google"
+  }
   return formatearTelefonoVisible(usuario.telefono) || usuario.correo || ""
 }
 
