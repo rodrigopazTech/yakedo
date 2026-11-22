@@ -10,7 +10,7 @@ import {
   vistaQr,
   vistaVencido,
 } from "./vistas.ts"
-import { formatoNumero, pesos, type PedidoLeido } from "../venta/dominio.ts"
+import { etiquetaLibre, formatoNumero, pesos, type PedidoLeido } from "../venta/dominio.ts"
 
 export function PantallaQr({
   numero,
@@ -22,6 +22,7 @@ export function PantallaQr({
   mismo,
   otro,
   destacados,
+  detalle = null,
   qrString,
   alVolver,
   alBancos,
@@ -36,12 +37,13 @@ export function PantallaQr({
   mismo: boolean
   otro: boolean
   destacados: string[]
+  detalle?: string | null
   qrString: string
   alVolver: () => void
   alBancos: () => void
   alAyuda: () => void
 }) {
-  const vista = vistaQr({ numero, piezas, totalCentavos, creadoEn, venceEn, restanteMs, mismo, otro, destacados })
+  const vista = vistaQr({ numero, piezas, totalCentavos, creadoEn, venceEn, restanteMs, mismo, otro, destacados, detalle })
   const avance = Math.max(0, Math.min(100, (restanteMs / 360_000) * 100))
   return (
     <main className="n-qr">
@@ -268,11 +270,17 @@ export function HojaTicket({ pedido, alCerrar }: { pedido: PedidoLeido; alCerrar
           <button type="button" aria-label="Cerrar" onClick={alCerrar}>×</button>
         </header>
         <ul>
-          {pedido.items.map((item) => (
-            <li key={`${item.nombre}-${item.precioCentavos}`}>
-              {item.cantidad}× {item.nombre} <strong>{pesos(item.precioCentavos * item.cantidad)}</strong>
+          {pedido.tipo === "libre" ? (
+            <li>
+              {etiquetaLibre(pedido.concepto)} <strong>{pesos(pedido.total)}</strong>
             </li>
-          ))}
+          ) : (
+            pedido.items.map((item) => (
+              <li key={`${item.nombre}-${item.precioCentavos}`}>
+                {item.cantidad}× {item.nombre} <strong>{pesos(item.precioCentavos * item.cantidad)}</strong>
+              </li>
+            ))
+          )}
         </ul>
         <p><span>Total</span> <strong>{pesos(pedido.total)}</strong></p>
       </aside>

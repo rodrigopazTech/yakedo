@@ -19,9 +19,15 @@ import {
   notaPagoOtroDia,
   notaPorDevolver,
   pedidosDelDia,
+  datosCobroLibre,
+  etiquetaLibre,
   pesos,
   pesosFijos,
   puedeCancelar,
+  resumenItems,
+  textoRegresoLibre,
+  textoTicketGuardado,
+  vistaCobroLibre,
   recibidoDeAtajo,
   regresoEn,
   textoBloqueoCancelar,
@@ -151,6 +157,107 @@ describe("ticket y efectivo", () => {
     expect(tramite.codiAyuda).toContain("cuenta nueva")
     expect(tramite.aviso).toBe("Mientras, solo puedes cobrar en efectivo")
     expect(vistaCobrar(43, 4, 12200, "primera").aviso).toBe("Mientras la revisamos, cobra en efectivo.")
+    const libre = vistaCobrar(45, 0, 8500, null, { concepto: "Abono de Don Pepe" })
+    expect(libre.subtitulo).toBe("Ticket #0045 · Cobro libre · Abono de Don Pepe")
+    expect(libre.despues).toBe("Después eliges efectivo o CoDi, como en cualquier venta.")
+  })
+})
+
+describe("cobro libre", () => {
+  it("pide el monto, acepta centavos y corta el concepto en 40", () => {
+    const vacio = vistaCobroLibre({ texto: "", concepto: "", productosGuardados: 0 })
+    expect(vacio.monto).toBe("$0")
+    expect(vacio.ayudaMonto).toBe("Escribe el monto con los números. Para centavos usa el punto.")
+    expect(vacio.puedeCobrar).toBe(false)
+    expect(vacio.cobrar).toBe("Cobrar")
+    expect(vacio.apoyo).toBe("Cobra un monto sin elegir productos")
+
+    const cero = vistaCobroLibre({ texto: "0.00", concepto: "", productosGuardados: 0 })
+    expect(cero.monto).toBe("$0.00")
+    expect(cero.ayudaMonto).toBe("El monto tiene que ser mayor a $0.")
+    expect(cero.puedeCobrar).toBe(false)
+    expect(datosCobroLibre("0", "")).toBeNull()
+
+    const pesosEnteros = vistaCobroLibre({ texto: "85", concepto: "Abono de Don Pepe", productosGuardados: 0 })
+    expect(pesosEnteros.monto).toBe("$85")
+    expect(pesosEnteros.ayudaMonto).toBe("Son $85.00. Para centavos usa el punto.")
+    expect(pesosEnteros.cobrar).toBe("Cobrar $85.00")
+    expect(pesosEnteros.contador).toBe("17/40")
+    expect(datosCobroLibre("85", "Abono de Don Pepe")).toEqual({ total: 8500, concepto: "Abono de Don Pepe", items: [] })
+
+    const centavos = vistaCobroLibre({ texto: "85.50", concepto: "", productosGuardados: 0 })
+    expect(centavos.monto).toBe("$85.50")
+    expect(centavos.ayudaMonto).toBe("Son $85.50. Para centavos usa el punto.")
+    expect(centavos.puedeCobrar).toBe(true)
+    expect(datosCobroLibre("85.5", "  ")).toEqual({ total: 8550, concepto: null, items: [] })
+
+    const concepto = "Abono de Don Pepe, pan y café del sábado"
+    expect([...concepto]).toHaveLength(40)
+    const limite = vistaCobroLibre({ texto: "85", concepto, productosGuardados: 0 })
+    expect(limite.contador).toBe("40/40")
+    expect(limite.ayudaConcepto).toBe("Máximo 40 letras. Ya no caben más.")
+    expect(limite.puedeCobrar).toBe(true)
+    expect(datosCobroLibre("85", `${concepto} extra`)?.concepto).toBe(concepto)
+  })
+
+  it("aparta un ticket de 4 productos y no lo mezcla con el cobro", () => {
+    const lineas = [
+      { productoId: "cafe", nombre: "Café americano", precioCentavos: 3500, cantidad: 2 },
+      { productoId: "tamal", nombre: "Tamal verde", precioCentavos: 2200, cantidad: 1 },
+      { productoId: "gordita", nombre: "Gordita de chicharrón", precioCentavos: 3000, cantidad: 1 },
+    ]
+    const vista = vistaCobroLibre({ texto: "85", concepto: "Abono de Don Pepe", productosGuardados: 4 })
+    expect(vista.ticketGuardado).toBe("Tu ticket con 4 productos se queda guardado. Al terminar, vuelves a él.")
+    expect(textoTicketGuardado(4)).toBe(vista.ticketGuardado)
+    expect(textoRegresoLibre(4)).toBe("Cobro libre listo. Aquí sigue tu ticket con 4 productos.")
+    const cobro = datosCobroLibre("85", "Abono de Don Pepe")
+    expect(cobro?.items).toEqual([])
+    expect(lineas).toHaveLength(3)
+    expect(lineas.reduce((suma, linea) => suma + linea.cantidad, 0)).toBe(4)
+  })
+
+  it("suma el cobro libre en los totales y rechaza más de $1,000.00", () => {
+    const pagado = pedido({
+      id: "libre-pagado",
+      numero: 45,
+      tipo: "libre",
+      concepto: "Abono de Don Pepe",
+      estado: "Pagado",
+      total: 8500,
+      metodo: "codi",
+      pagadoEn: MEDIODIA,
+    })
+    const pendiente = pedido({
+      id: "libre-pendiente",
+      numero: 46,
+      tipo: "libre",
+      concepto: "Doña Lupe",
+      estado: "Pendiente",
+      total: 6000,
+      cobroActivoId: "c",
+      cobros: [{ id: "c", creadoEn: MEDIODIA - 400_000, venceEn: MEDIODIA - 1_000, estado: "vencido", pagos: [] }],
+    })
+    const otro = pedido({ id: "venta-pendiente", estado: "Pendiente", total: 6500 })
+    const totales = totalesDelDia([pagado, pendiente, otro], DIA)
+    expect(totales.vendido).toBe(8500)
+    expect(totales.tickets).toBe(1)
+    expect(totales.codi).toBe(8500)
+    expect(totales.pendiente).toBe(12_500)
+    expect(resumenItems(pagado, MEDIODIA)).toBe("Cobro libre · Abono de Don Pepe")
+    expect(etiquetaLibre(null)).toBe("Cobro libre")
+    expect(resumenItems(pedido({ tipo: "libre", concepto: "   ", estado: "Pagado", total: 4000, metodo: "efectivo", pagadoEn: MEDIODIA }), MEDIODIA)).toBe("Cobro libre")
+    expect(resumenItems(pendiente, MEDIODIA)).toBe("Cobro libre · Doña Lupe · cobro vencido")
+
+    const tope = vistaCobroLibre({ texto: "1000", concepto: "", productosGuardados: 0 })
+    expect(tope.puedeCobrar).toBe(true)
+    expect(datosCobroLibre("1000.00", "")?.total).toBe(100_000)
+    const arriba = vistaCobroLibre({ texto: "1000.01", concepto: "", productosGuardados: 0 })
+    expect(arriba.puedeCobrar).toBe(false)
+    expect(arriba.cobrar).toBe("Cobrar")
+    expect(arriba.sobreMaximo).toBe(true)
+    expect(arriba.ayudaMonto).toBe("El monto máximo por cobro es de $1,000.00.")
+    expect(vistaCobroLibre({ texto: "15000", concepto: "", productosGuardados: 0 }).monto).toBe("$15,000")
+    expect(datosCobroLibre("15000", "Abono")).toBeNull()
   })
 })
 
