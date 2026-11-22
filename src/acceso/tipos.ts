@@ -1,5 +1,10 @@
 export type MetodoEntrada = "telefono" | "google"
 
+export type DialogoAcceso =
+  | { tipo: "sin-red" }
+  | { tipo: "coincide"; correo: string }
+  | { tipo: "distintas"; cuenta: string; google: string }
+
 export interface UsuarioSesion {
   uid: string
   telefono: string | null

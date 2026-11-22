@@ -37,65 +37,62 @@ export const TEXTO_CUENTA_BLOQUEADA =
 
 export const PALABRAS_PROHIBIDAS = ["dígitos", "digitos", "notificación", "notificacion", "vivo"] as const
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_CORREO_TITULO = "¿Cuál es tu correo?"
+export const TEXTO_CORREO_TITULO = "Tu correo"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_CORREO_APOYO =
-  "Lo guardamos en tu cuenta y te mandamos un aviso de Firebase para confirmarlo. Así se enlaza con Google."
+export const TEXTO_CORREO_APOYO = "Lo usamos para avisarte y para entrar con Google."
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
 export const TEXTO_CORREO_ETIQUETA = "Correo"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_CORREO_BOTON = "Guardar correo"
+export const TEXTO_CORREO_BOTON = "Continuar"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_CORREO_INVALIDO = "Revisa el correo. Falta algo."
+export const TEXTO_CONFIRMA_TITULO = "¿Es tu correo?"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_AVISO_CORREO =
-  "Te mandamos un aviso para confirmar tu correo. Ábrelo en tu correo y luego sigue."
+export const TEXTO_CONFIRMA_BOTON = "Confirmar"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_AVISO_LISTO = "Ya confirmé el aviso"
+export const TEXTO_CAMBIAR_CORREO = "Cambiar correo"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_AVISO_OTRA_VEZ = "Enviar el aviso otra vez"
+export const TEXTO_MISMA_CUENTA = "Es tu misma cuenta"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_AVISO_SEGUIR = "Seguir"
+export const TEXTO_MISMA_CUENTA_APOYO = "El correo de Google coincide con el de tu cuenta."
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_CORREO_DE_GOOGLE_TITULO = "Este correo ya está en una cuenta de Google."
+export const TEXTO_CUENTAS_DISTINTAS = "Son cuentas distintas"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_CORREO_DE_GOOGLE_APOYO =
-  "Entra con Google. Ya dentro, vincula tu número desde Ajustes. No abrimos otro negocio."
+export const TEXTO_CUENTAS_DISTINTAS_APOYO = "Este correo de Google no es el de tu cuenta."
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_ENLAZAR_GOOGLE_TITULO = "Ese correo ya está en tu cuenta."
+export const TEXTO_SEGUIR_CUENTA = "Seguir con mi cuenta"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_ENLAZAR_GOOGLE_APOYO =
-  "Entra con tu número para enlazar Google a la misma cuenta."
-
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_FALTA_CONFIRMAR_CORREO =
-  "Falta confirmar el aviso del correo para enlazar Google."
-
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
 export const TEXTO_VINCULAR_NUMERO = "Vincular número"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_VINCULAR_APOYO = "Enlaza el celular a esta cuenta de Google."
+export const TEXTO_VINCULAR_TITULO = "Vincular tu número"
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_SIN_CONFIGURACION =
-  "Falta la configuración de Firebase en este aparato."
+export const TEXTO_VINCULAR_APOYO = "Te mandamos un código por SMS para vincularlo."
 
-// TEXTO PROVISIONAL: espera a Diseño UI/UX
-export const TEXTO_NO_SE_PUDO = "No se pudo completar. Inténtalo otra vez."
+export const TEXTO_ENVIANDO = "Enviando código…"
+
+export const TEXTO_FALLO_ENVIO = "No se pudo enviar el código. Intenta otra vez."
+
+export const TEXTO_FALLO_VERIFICACION = "No se pudo verificar el código. Intenta otra vez."
+
+export const TEXTO_SIN_RED_TITULO = "Se necesita internet"
+
+export const TEXTO_SIN_RED = "Para entrar, esta tablet tiene que estar conectada."
+
+export const TEXTO_ENTENDIDO = "Entendido"
+
+export const TEXTO_TERMINOS = "Términos"
+
+export const TEXTO_AVISO_PRIVACIDAD = "Aviso de privacidad"
+
+// TEXTO PROVISIONAL: falta en Figma el correo mal escrito
+export const TEXTO_CORREO_INVALIDO = "Revisa el correo. Falta algo."
+
+export function textoTuCuenta(correo: string): string {
+  return `Tu cuenta: ${correo}`
+}
+
+export function textoGoogleCuenta(correo: string): string {
+  return `Google: ${correo}`
+}
 
 export function textoEsperaOtroCodigo(milisegundos: number): string {
   const total = Math.max(0, Math.ceil(milisegundos / 1000))

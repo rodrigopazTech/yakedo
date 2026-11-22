@@ -18,7 +18,6 @@ import iconoCampana from "./activos/icono-campana.svg"
 import iconoCelular from "./activos/icono-celular.svg"
 import iconoCheck from "./activos/icono-check.svg"
 import iconoCheckChico from "./activos/icono-check-chico.svg"
-import iconoChevron from "./activos/icono-chevron.svg"
 import iconoQr from "./activos/icono-qr.svg"
 import iconoReloj from "./activos/icono-reloj.svg"
 import palomita from "./activos/palomita.svg"
@@ -349,55 +348,6 @@ export function PantallaCobrar({
         ) : null}
       </section>
     </main>
-  )
-}
-
-export function FilasNegocio({
-  negocio,
-  actual,
-  nueva,
-  puedeCambiar,
-  avisoBloqueo,
-  alNombre,
-  alCambiar,
-}: {
-  negocio: NegocioGuardado
-  actual: BloqueCuenta | null
-  nueva: BloqueCuenta | null
-  puedeCambiar: boolean
-  avisoBloqueo: string | null
-  alNombre: () => void
-  alCambiar: () => void
-}) {
-  const enTramite = nueva && (nueva.estado === "PENDING" || nueva.estado === "PROCESSING")
-  return (
-    <div className="filas-negocio">
-      <button className="fila-ajuste" type="button" onClick={alNombre}>
-        <span>Negocio</span>
-        <strong>{negocio.nombre}</strong>
-        <img src={iconoChevron} alt="" width={24} height={24} />
-      </button>
-      {actual ? (
-        <p className="fila-ajuste fila-ajuste-fija">
-          <span>Cuenta para cobrar</span>
-          <strong>{cuentaVisible(actual.banco, actual.ultimos4)}</strong>
-        </p>
-      ) : null}
-      {enTramite ? (
-        <p className="fila-ajuste fila-ajuste-fija">
-          <span>Cuenta nueva</span>
-          <strong>
-            {nueva.banco} · CLABE •••• {nueva.ultimos4} · En trámite
-          </strong>
-        </p>
-      ) : null}
-      {actual?.estado === "ACTIVE" ? (
-        <button className="boton-secundario" type="button" onClick={alCambiar} disabled={!puedeCambiar}>
-          Cambiar CLABE
-        </button>
-      ) : null}
-      {avisoBloqueo ? <p className="ajustes-bloqueo">{avisoBloqueo}</p> : null}
-    </div>
   )
 }
 
