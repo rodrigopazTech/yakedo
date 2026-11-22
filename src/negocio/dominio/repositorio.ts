@@ -1,3 +1,6 @@
+import type { CobroGuardado, CobroNuevo, PedidoParaCobro } from "../../cobro/modelo.ts"
+import type { PagoQr } from "../../cobro/pey-qr.ts"
+import type { ResultadoPago } from "../../cobro/resolucion.ts"
 import type { EstadoCuentaPey, NegocioGuardado, CuentaDocumento, Privado, AvisoCuenta } from "./cuenta.ts"
 
 export interface EstadoLocal {
@@ -39,4 +42,10 @@ export interface RepositorioNegocio {
   hayCobroActivo(uid: string): Promise<boolean>
   aplicarEstado(bankAccountId: string, estado: EstadoCuentaPey): Promise<ResultadoEstado | null>
   tomarWebhook(id: string, tipo: string, eventoCobro: unknown | null): Promise<"nuevo" | "repetido">
+  leerPedidoCobro(uid: string, pedidoId: string): Promise<PedidoParaCobro | null>
+  bankAccountActivo(uid: string): Promise<string | null>
+  guardarCobroQr(datos: CobroNuevo): Promise<void>
+  leerCobroQr(uid: string, pedidoId: string, cobroId: string): Promise<CobroGuardado | null>
+  marcarCobroVencido(uid: string, pedidoId: string, cobroId: string): Promise<void>
+  resolverPagoQr(webhookId: string, pago: PagoQr, ahora: number): Promise<ResultadoPago>
 }

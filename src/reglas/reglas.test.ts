@@ -109,6 +109,8 @@ describe("reglas de Firestore y Storage", () => {
     await assertSucceeds(pedido.collection("cobros").doc("c1").get())
     await assertFails(pedido.collection("cobros").doc("c2").set({ estado: "pagado" }))
     await assertFails(pedido.collection("cobros").doc("c1").collection("pagos").doc("w").set({ tipo: "normal" }))
+    await assertFails(ana.collection("cobrosQr").doc("qr_1").set({ negocioId: "ana" }))
+    await assertFails(ana.collection("cobrosQr").doc("qr_1").get())
     await assertFails(ana.collection("pagosSinAsignar").doc("y").set({ monto: 2 }))
     await assertFails(ana.collection("pagosSinAsignar").doc("x").get())
     await assertFails(ana.collection("clabes").doc("012180000000000000").get())

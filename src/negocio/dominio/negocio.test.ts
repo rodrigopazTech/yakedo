@@ -255,13 +255,14 @@ describe("webhook", () => {
     expect(await recibirEvento("msg_1", cuerpo, repo)).toBe("repetido")
   })
 
-  it("guarda el cobro sin tocar la cuenta y responde ignorado a otro evento", async () => {
+  it("guarda un pago sin cobro como sin asignar y no toca la cuenta", async () => {
     const repo = new MemoriaNegocio()
     await registrarNegocio(alta, repo, peyFalso({ id: "ba_1" }))
     const antes = (await repo.leer("ana")).cuenta?.actual?.estado
-    const pago = JSON.stringify({ type: "codi.qr.payment_received", data: { codiQrId: "qr_1" } })
-    expect(await recibirEvento("pago_1", pago, repo)).toBe("cobro")
-    expect(repo.eventosCobro().get("pago_1")).toMatchObject({ codiQrId: "qr_1" })
+    const pago = JSON.stringify({ type: "codi.qr.payment_received", data: { codiQrId: "qr_1", amount: 0.01 } })
+    expect(await recibirEvento("pago_1", pago, repo)).toBe("sin-asignar")
+    expect(repo.doc("pagosSinAsignar/pago_1")).toMatchObject({ codiQrId: "qr_1", amountCentavos: 1 })
+    expect(await recibirEvento("pago_1", pago, repo)).toBe("repetido")
     expect((await repo.leer("ana")).cuenta?.actual?.estado).toBe(antes)
     expect(await recibirEvento("otro", JSON.stringify({ type: "payment_link.status_updated", data: {} }), repo)).toBe("ignorado")
     expect(repo.eventosCobro().has("otro")).toBe(false)

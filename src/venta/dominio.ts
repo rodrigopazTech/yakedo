@@ -285,6 +285,8 @@ export interface CobroLeido {
   venceEn: number
   estado: "activo" | "vencido" | "pagado"
   pagos: PagoLeido[]
+  qrString?: string | null
+  codiQrId?: string | null
 }
 
 export interface PedidoLeido {
@@ -517,10 +519,19 @@ export function notaPagoOtroDia(pedido: PedidoLeido): string | null {
 export function etiquetaIntento(cobro: CobroLeido, ahora: number): string {
   const pago = cobro.pagos.find((item) => item.tipo === "normal") ?? cobro.pagos[0]
   if (pago?.tipo === "no_esperado") return "No esperado"
-  if (pago?.tipo === "duplicado") return "Duplicado"
-  if (pago) return `Pagó ${horaMexico(pago.datePaid)}`
-  if (cobro.venceEn <= ahora) return `Venció ${horaMexico(cobro.venceEn)}`
+  if (pago?.tipo === "duplicado") return "Pago duplicado"
+  if (pago) return `Pagado ${horaMexico(pago.datePaid)}`
+  if (cobro.venceEn <= ahora || cobro.estado === "vencido") return `Venció ${horaMexico(cobro.venceEn)}`
   return `Vence ${horaMexico(cobro.venceEn)}`
+}
+
+export function pastillaIntento(cobro: CobroLeido, ahora: number): string {
+  const pago = cobro.pagos.find((item) => item.tipo === "normal") ?? cobro.pagos[0]
+  if (pago?.tipo === "no_esperado") return "No esperado"
+  if (pago?.tipo === "duplicado" && !cobro.pagos.some((item) => item.tipo === "normal")) return "Pago duplicado"
+  if (pago?.tipo === "normal" || cobro.estado === "pagado") return "Pagado"
+  if (cobro.venceEn > ahora && cobro.estado !== "vencido") return "Cobrando"
+  return "Pendiente"
 }
 
 export function pedidosDelDia(pedidos: PedidoLeido[], dia: string): PedidoLeido[] {
