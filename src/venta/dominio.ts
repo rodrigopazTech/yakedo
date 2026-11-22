@@ -63,6 +63,21 @@ export const TEXTO_OTRO_METODO = "Elegir otro método"
 /** El texto aprobado todavía no está en Figma. */
 export const TEXTO_YA_PAGADO = "Este pedido ya estaba pagado."
 
+export const TEXTO_LIBRE_TITULO = "Cobro libre"
+export const TEXTO_LIBRE_APOYO = "Cobra un monto sin elegir productos"
+export const TEXTO_LIBRE_PREGUNTA = "¿Cuánto vas a cobrar?"
+export const TEXTO_LIBRE_AYUDA = "Escribe el monto con los números. Para centavos usa el punto."
+export const TEXTO_LIBRE_CERO = "El monto tiene que ser mayor a $0."
+export const TEXTO_LIBRE_CONCEPTO = "Concepto (opcional)"
+export const TEXTO_LIBRE_EJEMPLO = "Ej. Abono de Don Pepe"
+export const TEXTO_LIBRE_CONCEPTO_AYUDA = "Sale en el ticket y en el historial. Si lo dejas vacío, se cobra igual."
+export const TEXTO_LIBRE_CONCEPTO_LIMITE = "Máximo 40 letras. Ya no caben más."
+export const TEXTO_LIBRE_DESPUES = "Después eliges efectivo o CoDi, como en cualquier venta."
+/** $1,000.00 MXN. Un centavo más no se cobra. */
+export const MAXIMO_LIBRE_CENTAVOS = 100_000
+// UI PROVISIONAL: falta en Figma el texto final del monto máximo (el marco deja «$X»).
+export const TEXTO_LIBRE_MAXIMO = "El monto máximo por cobro es de $1,000.00."
+
 const PARTICULAS = new Set(["de", "del", "la", "las", "el", "los", "y", "con", "a"])
 
 export function limitarNombre(valor: string): string {
@@ -543,12 +558,96 @@ export function pedidosDelDia(pedidos: PedidoLeido[], dia: string): PedidoLeido[
     .sort((a, b) => (b.pagadoEn ?? b.creadoEn) - (a.pagadoEn ?? a.creadoEn))
 }
 
-export function resumenItems(pedido: PedidoLeido): string {
-  if (pedido.tipo === "libre") return pedido.concepto?.trim() || "Cobro libre"
+export function etiquetaLibre(concepto: string | null | undefined): string {
+  const limpio = concepto?.trim()
+  return limpio ? `Cobro libre · ${limpio}` : "Cobro libre"
+}
+
+export function resumenItems(pedido: PedidoLeido, ahora = Date.now()): string {
+  const base = pedido.tipo === "libre" ? etiquetaLibre(pedido.concepto) : resumenProductos(pedido)
+  if (estadoVisible(pedido, ahora) === "vencido") return `${base} · cobro vencido`
+  return base
+}
+
+function resumenProductos(pedido: PedidoLeido): string {
   const nombres = pedido.items.map((item) => item.nombre)
   if (nombres.length === 0) return "Sin productos"
   if (nombres.length <= 2) return nombres.join(", ")
   return `${nombres[0]}, ${nombres[1]} y ${nombres.length - 2} más`
+}
+
+export function textoTicketGuardado(productos: number): string {
+  return `Tu ticket con ${textoPiezas(productos)} se queda guardado. Al terminar, vuelves a él.`
+}
+
+export function textoRegresoLibre(productos: number): string {
+  return `Cobro libre listo. Aquí sigue tu ticket con ${textoPiezas(productos)}.`
+}
+
+export interface DatosCobroLibre {
+  total: number
+  concepto: string | null
+  items: []
+}
+
+export function datosCobroLibre(texto: string, concepto: string): DatosCobroLibre | null {
+  const centavos = centavosDeTeclado(texto)
+  if (texto.trim() === "" || centavos <= 0 || centavos > MAXIMO_LIBRE_CENTAVOS) return null
+  const limpio = limitarNombre(concepto).trim()
+  return { total: centavos, concepto: limpio.length > 0 ? limpio : null, items: [] }
+}
+
+export interface VistaCobroLibre {
+  titulo: string
+  apoyo: string
+  pregunta: string
+  monto: string
+  ayudaMonto: string
+  errorMonto: boolean
+  sobreMaximo: boolean
+  conceptoEtiqueta: string
+  conceptoPlaceholder: string
+  ayudaConcepto: string
+  alLimite: boolean
+  contador: string
+  puedeCobrar: boolean
+  cobrar: string
+  despues: string
+  ticketGuardado: string | null
+  centavos: number
+}
+
+export function vistaCobroLibre(entrada: { texto: string; concepto: string; productosGuardados: number }): VistaCobroLibre {
+  const centavos = centavosDeTeclado(entrada.texto)
+  const vacio = entrada.texto.trim() === ""
+  const sobreMaximo = centavos > MAXIMO_LIBRE_CENTAVOS
+  const enCero = !vacio && centavos <= 0
+  const puede = datosCobroLibre(entrada.texto, entrada.concepto) !== null
+  const letras = [...limitarNombre(entrada.concepto)].length
+  const alLimite = letras >= LIMITE_NOMBRE
+  let ayudaMonto = TEXTO_LIBRE_AYUDA
+  if (enCero) ayudaMonto = TEXTO_LIBRE_CERO
+  else if (sobreMaximo) ayudaMonto = TEXTO_LIBRE_MAXIMO
+  else if (puede) ayudaMonto = `Son ${pesosFijos(centavos)}. Para centavos usa el punto.`
+  return {
+    titulo: TEXTO_LIBRE_TITULO,
+    apoyo: TEXTO_LIBRE_APOYO,
+    pregunta: TEXTO_LIBRE_PREGUNTA,
+    monto: vacio ? "$0" : entrada.texto.includes(".") || enCero ? pesosFijos(centavos) : pesos(centavos),
+    ayudaMonto,
+    errorMonto: enCero || sobreMaximo,
+    sobreMaximo,
+    conceptoEtiqueta: TEXTO_LIBRE_CONCEPTO,
+    conceptoPlaceholder: TEXTO_LIBRE_EJEMPLO,
+    ayudaConcepto: alLimite ? TEXTO_LIBRE_CONCEPTO_LIMITE : TEXTO_LIBRE_CONCEPTO_AYUDA,
+    alLimite,
+    contador: `${letras}/40`,
+    puedeCobrar: puede,
+    cobrar: puede ? `Cobrar ${pesosFijos(centavos)}` : "Cobrar",
+    despues: TEXTO_LIBRE_DESPUES,
+    ticketGuardado: entrada.productosGuardados > 0 ? textoTicketGuardado(entrada.productosGuardados) : null,
+    centavos,
+  }
 }
 
 export function regresoEn(segundos: number): string {
@@ -608,11 +707,20 @@ export function vistaTicket(lineas: LineaTicket[], hayProductos: boolean): {
   }
 }
 
-export function vistaCobrar(numero: number, cantidad: number, total: number, motivo: "primera" | "tramite" | null) {
+export function vistaCobrar(
+  numero: number,
+  cantidad: number,
+  total: number,
+  motivo: "primera" | "tramite" | null,
+  libre: { concepto: string | null } | null = null,
+) {
   const codi = motivoCoDi(motivo)
   return {
     titulo: "Cobrar",
-    subtitulo: `Ticket ${formatoNumero(numero)} · ${textoPiezas(cantidad)}`,
+    subtitulo: libre
+      ? `Ticket ${formatoNumero(numero)} · ${etiquetaLibre(libre.concepto)}`
+      : `Ticket ${formatoNumero(numero)} · ${textoPiezas(cantidad)}`,
+    despues: libre ? TEXTO_LIBRE_DESPUES : null,
     totalEtiqueta: "Total a cobrar",
     total: pesosFijos(total),
     efectivo: "Efectivo",

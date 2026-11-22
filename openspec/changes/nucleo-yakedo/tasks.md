@@ -39,9 +39,9 @@
 
 ## 4. Cobro libre
 
-- [ ] 4.1 Pantalla «Cobro libre» con teclado, concepto de 40 letras y textos aprobados. Verificación: pruebas de monto en cero, con centavos y con concepto al límite.
-- [ ] 4.2 Ticket guardado aparte y regreso al ticket. Verificación: prueba con 4 productos.
-- [ ] 4.3 Cobro libre en el flujo de pago y en el historial, con máximo de $1,000.00 MXN. Verificación: prueba de totales y de que un monto mayor a $1,000.00 no se cobra. El texto de error espera a Diseño UI/UX.
+- [x] 4.1 Pantalla «Cobro libre» con teclado, concepto de 40 letras y textos aprobados. Verificación: pruebas de monto en cero, con centavos y con concepto al límite.
+- [x] 4.2 Ticket guardado aparte y regreso al ticket. Verificación: prueba con 4 productos.
+- [x] 4.3 Cobro libre en el flujo de pago y en el historial, con máximo de $1,000.00 MXN. Verificación: prueba de totales y de que un monto mayor a $1,000.00 no se cobra. El texto de error espera a Diseño UI/UX.
 
 ## 5. Lista de bancos con CoDi (ROD-382)
 

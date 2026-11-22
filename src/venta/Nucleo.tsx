@@ -28,8 +28,10 @@ import {
   centavosDeTeclado,
   encabezadoDia,
   estaAgotado,
+  datosCobroLibre,
   etiquetaConfirmarEfectivo,
   etiquetaIntento,
+  etiquetaLibre,
   pastillaIntento,
   diaChip,
   fechaBarra,
@@ -55,8 +57,10 @@ import {
   textoCancelar,
   textoEstado,
   textoQuitarProducto,
+  textoRegresoLibre,
   totalesDelDia,
   vistaCobrar,
+  vistaCobroLibre,
   vistaProducto,
   vistaTicket,
   escribirEfectivo,
@@ -106,6 +110,7 @@ import {
   cobrarEfectivo,
   crearCategoria,
   crearPedido,
+  crearPedidoLibre,
   crearProducto,
   guardarProducto,
   leerCatalogo,
@@ -119,7 +124,7 @@ import {
 } from "./repositorio.ts"
 
 type Motivo = "primera" | "tramite" | null
-type Vista = "venta" | "editar" | "producto" | "cobrar" | "efectivo" | "yaquedo" | "historial" | "qr" | "vencido"
+type Vista = "venta" | "editar" | "producto" | "cobrar" | "efectivo" | "yaquedo" | "historial" | "qr" | "vencido" | "libre"
 
 interface CobroPantalla {
   pedidoId: string
@@ -225,6 +230,10 @@ export function Nucleo({
   const [productos, setProductos] = useState<ProductoGuardado[]>([])
   const [fotos, setFotos] = useState<Record<string, string>>({})
   const [lineas, setLineas] = useState<LineaTicket[]>([])
+  const [libreTexto, setLibreTexto] = useState("")
+  const [libreConcepto, setLibreConcepto] = useState("")
+  const [avisoLibre, setAvisoLibre] = useState<string | null>(null)
+  const cobroMeta = useRef<{ tipo: "venta" | "libre"; apartados: number }>({ tipo: "venta", apartados: 0 })
   const [pedidos, setPedidos] = useState<PedidoLeido[]>([])
   const [categoriaVenta, setCategoriaVenta] = useState<string | null>(null)
   const [categoriaEdicion, setCategoriaEdicion] = useState("todas")
@@ -338,6 +347,7 @@ export function Nucleo({
     const referencia = doc(db, "negocios", uid, "pedidos", cobroUi.pedidoId, "cobros", cobroUi.cobroId)
     return onSnapshot(referencia, (snap) => {
       if (snap.get("estado") !== "pagado") return
+      anotarLibreListo()
       setPedidoCobro((actual) => (actual ? { ...actual, estado: "Pagado", metodo: "codi", pagadoEn: Date.now() } : actual))
       setVista("yaquedo")
     })
@@ -350,6 +360,7 @@ export function Nucleo({
       .then((resultado) => {
         const datos = resultado.data as { estado?: string }
         if (datos.estado === "pagado") {
+          anotarLibreListo()
           setPedidoCobro((actual) => (actual ? { ...actual, estado: "Pagado", metodo: "codi", pagadoEn: Date.now() } : actual))
           setVista("yaquedo")
         } else if ((datos.estado === "duplicado" || datos.estado === "no-esperado") && pedidoCobro) {
@@ -403,6 +414,7 @@ export function Nucleo({
     if (!exigirLinea() || lineas.length === 0) return
     setError(null)
     try {
+      cobroMeta.current = { tipo: "venta", apartados: 0 }
       const creado = await crearPedido(db, uid, lineas.map((linea) => ({ ...linea })))
       const pedido: PedidoLeido = {
         id: creado.id,
@@ -431,6 +443,7 @@ export function Nucleo({
   }
 
   function abrirCobro(pedido: PedidoLeido) {
+    cobroMeta.current = pedido.tipo === "libre" ? { tipo: "libre", apartados: piezas(lineas) } : { tipo: "venta", apartados: 0 }
     if (pedido.cobroActivoId && pedido.cobros.some((cobro) => cobro.id === pedido.cobroActivoId && cobro.venceEn > Date.now())) {
       setRetomar(pedido)
       return
@@ -448,6 +461,7 @@ export function Nucleo({
       return
     }
     if (resultado !== "pagado") return
+    anotarLibreListo()
     setPedidoCobro({
       ...pedidoCobro,
       estado: "Pagado",
@@ -457,6 +471,51 @@ export function Nucleo({
     })
     setVista("yaquedo")
     void recargarPedidos()
+  }
+
+  function anotarLibreListo() {
+    if (cobroMeta.current.tipo === "libre" && cobroMeta.current.apartados > 0) {
+      setAvisoLibre(textoRegresoLibre(cobroMeta.current.apartados))
+    }
+  }
+
+  function abrirLibre() {
+    setLibreTexto("")
+    setLibreConcepto("")
+    setAvisoLibre(null)
+    setVista("libre")
+  }
+
+  async function confirmarLibre() {
+    const datos = datosCobroLibre(libreTexto, libreConcepto)
+    if (!datos || !exigirLinea()) return
+    cobroMeta.current = { tipo: "libre", apartados: piezas(lineas) }
+    try {
+      const creado = await crearPedidoLibre(db, uid, datos.total, datos.concepto)
+      if (!creado) return
+      const pedido: PedidoLeido = {
+        id: creado.id,
+        numero: creado.numero,
+        tipo: "libre",
+        concepto: datos.concepto,
+        items: [],
+        total: datos.total,
+        estado: "Pendiente",
+        creadoEn: Date.now(),
+        pagadoEn: null,
+        canceladoEn: null,
+        metodo: null,
+        efectivo: null,
+        cobroActivoId: null,
+        cobros: [],
+      }
+      setPedidoCobro(pedido)
+      setVista("cobrar")
+      void recargarPedidos()
+    } catch {
+      // UI PROVISIONAL: falta en Figma el fallo al crear el cobro libre.
+      setError("No se pudo crear el cobro libre.")
+    }
   }
 
   function quedaQr(): number {
@@ -574,7 +633,16 @@ export function Nucleo({
     }
   }
 
-  const cobrarVista = pedidoCobro ? vistaCobrar(pedidoCobro.numero, piezas(pedidoCobro.items), pedidoCobro.total, motivo) : null
+  const cobrarVista = pedidoCobro
+    ? vistaCobrar(
+        pedidoCobro.numero,
+        piezas(pedidoCobro.items),
+        pedidoCobro.total,
+        motivo,
+        pedidoCobro.tipo === "libre" ? { concepto: pedidoCobro.concepto } : null,
+      )
+    : null
+  const vistaLibre = vistaCobroLibre({ texto: libreTexto, concepto: libreConcepto, productosGuardados: piezas(lineas) })
   const cambio = pedidoCobro ? cambioEfectivo(pedidoCobro.total, recibido) : null
   const listaDia = pedidosDelDia(pedidos, dia)
   const totales = totalesDelDia(pedidos, dia)
@@ -677,10 +745,11 @@ export function Nucleo({
             lineas={lineas}
             ticket={ticket}
             fotos={fotos}
-            catalogoVacio={productos.length === 0}
-            alVaciar={() => setLineas([])}
+            avisoLibre={avisoLibre}
+            alVaciar={() => { setLineas([]); setAvisoLibre(null) }}
             alCantidad={(id, delta) => setLineas((actuales) => cambiarCantidad(actuales, id, delta))}
             alCobrar={() => void cobrar()}
+            alLibre={abrirLibre}
           />
           {panel ? (
             <div className="n-velo">
@@ -698,9 +767,13 @@ export function Nucleo({
                     <article key={pedido.id}>
                       <p>{horaMexico(pedido.creadoEn)} · {formatoNumero(pedido.numero)}</p>
                       <ul>
-                        {pedido.items.map((item) => (
-                          <li key={`${pedido.id}-${item.nombre}`}>{item.cantidad}× {item.nombre}</li>
-                        ))}
+                        {pedido.tipo === "libre" ? (
+                          <li>{etiquetaLibre(pedido.concepto)}</li>
+                        ) : (
+                          pedido.items.map((item) => (
+                            <li key={`${pedido.id}-${item.nombre}`}>{item.cantidad}× {item.nombre}</li>
+                          ))
+                        )}
                       </ul>
                       <strong>{textoEstado(pedido, Date.now())}</strong>
                       <div>
@@ -889,6 +962,53 @@ export function Nucleo({
         </main>
       ) : null}
 
+      {vista === "libre" ? (
+        <main className="n-libre-pantalla">
+          <header className="n-encabezado">
+            <button className="boton-regresar" type="button" onClick={() => setVista("venta")}>
+              <img src={iconoRegresar} alt="" width={22} height={22} />
+              Catálogo
+            </button>
+            <div>
+              <h1>{vistaLibre.titulo}</h1>
+              <p>{vistaLibre.apoyo}</p>
+            </div>
+          </header>
+          {vistaLibre.ticketGuardado ? <p className="n-libre-guardado">{vistaLibre.ticketGuardado}</p> : null}
+          <div className="n-libre-cuerpo">
+            <section>
+              <h2>{vistaLibre.pregunta}</h2>
+              <p className={vistaLibre.errorMonto ? "n-monto n-monto-error" : "n-monto"}>{vistaLibre.monto}</p>
+              {vistaLibre.sobreMaximo ? (
+                // UI PROVISIONAL: falta en Figma el texto final del monto máximo (el marco deja «$X»).
+                <p className="n-libre-ayuda n-error">{vistaLibre.ayudaMonto}</p>
+              ) : (
+                <p className={vistaLibre.errorMonto ? "n-libre-ayuda n-error" : "n-libre-ayuda"}>{vistaLibre.ayudaMonto}</p>
+              )}
+              <label>
+                {vistaLibre.conceptoEtiqueta}
+                <input
+                  value={libreConcepto}
+                  placeholder={vistaLibre.conceptoPlaceholder}
+                  onChange={(evento) => setLibreConcepto(limitarNombre(evento.target.value))}
+                />
+              </label>
+              <p className="n-libre-concepto-ayuda">
+                <span className={vistaLibre.alLimite ? "n-error" : ""}>{vistaLibre.ayudaConcepto}</span>
+                <span>{vistaLibre.contador}</span>
+              </p>
+            </section>
+            <aside>
+              <Teclado punto alTecla={(tecla) => setLibreTexto((actual) => escribirPrecio(actual, tecla))} />
+              <button className="boton-principal" type="button" disabled={!vistaLibre.puedeCobrar} onClick={() => void confirmarLibre()}>
+                {vistaLibre.cobrar}
+              </button>
+              <p className="n-libre-despues">{vistaLibre.despues}</p>
+            </aside>
+          </div>
+        </main>
+      ) : null}
+
       {vista === "cobrar" && cobrarVista && pedidoCobro ? (
         <main className="n-cobrar">
           <header className="n-encabezado">
@@ -898,6 +1018,7 @@ export function Nucleo({
             <div>
               <h1>{cobrarVista.titulo}</h1>
               <p>{cobrarVista.subtitulo}</p>
+              {cobrarVista.despues ? <p>{cobrarVista.despues}</p> : null}
             </div>
           </header>
           <p className="n-total-cobrar"><span>{cobrarVista.totalEtiqueta}</span><strong>{cobrarVista.total}</strong></p>
@@ -980,6 +1101,7 @@ export function Nucleo({
           mismo={cobroUi.mismo}
           otro={cobroUi.otro}
           destacados={listaBancos.destacados}
+          detalle={pedidoCobro.tipo === "libre" ? etiquetaLibre(pedidoCobro.concepto) : null}
           qrString={cobroUi.qrString}
           alVolver={() => setVerTicket(true)}
           alBancos={() => { setHojaBancos(true); void cargarBancos() }}
@@ -991,7 +1113,11 @@ export function Nucleo({
         <PantallaVencido
           numero={pedidoCobro.numero}
           totalCentavos={pedidoCobro.total}
-          alCarrito={() => { setLineas([]); setCobroUi(null); setVista("venta") }}
+          alCarrito={() => {
+            if (cobroMeta.current.tipo !== "libre") setLineas([])
+            setCobroUi(null)
+            setVista("venta")
+          }}
           alOtra={() => void elegirCodi()}
           alEfectivo={irAEfectivo}
         />
@@ -1052,7 +1178,7 @@ export function Nucleo({
                     <span>{horaMexico(pedido.pagadoEn ?? pedido.creadoEn)}</span>
                     <span>
                       <strong>Ticket {formatoNumero(pedido.numero)}</strong>
-                      <small>{resumenItems(pedido)}</small>
+                      <small>{resumenItems(pedido, Date.now())}</small>
                       {notaPagoOtroDia(pedido) ? <small>{notaPagoOtroDia(pedido)}</small> : null}
                     </span>
                     <em>{pedido.metodo === "codi" ? "CoDi" : pedido.metodo === "efectivo" ? "Efectivo" : ""}</em>
@@ -1231,18 +1357,20 @@ function Ticket({
   lineas,
   ticket,
   fotos,
-  catalogoVacio,
+  avisoLibre,
   alVaciar,
   alCantidad,
   alCobrar,
+  alLibre,
 }: {
   lineas: LineaTicket[]
   ticket: ReturnType<typeof vistaTicket>
   fotos: Record<string, string>
-  catalogoVacio: boolean
+  avisoLibre: string | null
   alVaciar: () => void
   alCantidad: (id: string | null, delta: number) => void
   alCobrar: () => void
+  alLibre: () => void
 }) {
   return (
     <aside className="n-ticket">
@@ -1279,15 +1407,18 @@ function Ticket({
           ))}
         </ul>
       )}
-      {catalogoVacio ? (
-        // UI PROVISIONAL: el flujo de Cobro libre es la sección 4; este botón no abre esa pantalla.
-        <button className="n-libre" type="button">Cobro libre</button>
-      ) : null}
+      <button className="n-libre" type="button" onClick={alLibre}>Cobro libre</button>
       <footer>
         <span>Total</span>
         <strong>{pesos(ticket.total)}</strong>
         <button className="boton-principal" type="button" disabled={!ticket.cobrar} onClick={alCobrar}>{ticket.cobrar ?? "Cobrar"}</button>
       </footer>
+      {avisoLibre ? (
+        <p className="n-libre-listo">
+          <span aria-hidden="true">✓</span>
+          {avisoLibre}
+        </p>
+      ) : null}
     </aside>
   )
 }
@@ -1388,13 +1519,20 @@ function Detalle({ pedido, ahora, alCancelar }: { pedido: PedidoLeido; ahora: nu
       </p>
       {bloqueo ? <p>{textoEstado(pedido, ahora)}</p> : null}
       <ul>
-        {pedido.items.map((item) => (
-          <li key={`${item.nombre}-${item.precioCentavos}`}>
-            <span>{item.cantidad}×</span>
-            <span>{item.nombre}</span>
-            <strong>{pesos(item.precioCentavos * item.cantidad)}</strong>
+        {pedido.tipo === "libre" ? (
+          <li>
+            <span className="n-detalle-libre">{etiquetaLibre(pedido.concepto)}</span>
+            <strong>{pesos(pedido.total)}</strong>
           </li>
-        ))}
+        ) : (
+          pedido.items.map((item) => (
+            <li key={`${item.nombre}-${item.precioCentavos}`}>
+              <span>{item.cantidad}×</span>
+              <span>{item.nombre}</span>
+              <strong>{pesos(item.precioCentavos * item.cantidad)}</strong>
+            </li>
+          ))
+        )}
       </ul>
       <p className="n-detalle-total"><span>Total</span><strong>{pesosFijos(pedido.total)}</strong></p>
       <dl>

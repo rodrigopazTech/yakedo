@@ -10,7 +10,7 @@ import {
   type Firestore,
 } from "firebase/firestore"
 import { getDownloadURL, ref, uploadBytes, type FirebaseStorage } from "firebase/storage"
-import type { CobroLeido, EstadoPedido, MetodoPago, PagoLeido, PedidoLeido } from "./dominio.ts"
+import { MAXIMO_LIBRE_CENTAVOS, limitarNombre, type CobroLeido, type EstadoPedido, type MetodoPago, type PagoLeido, type PedidoLeido } from "./dominio.ts"
 
 export interface CategoriaGuardada {
   id: string
@@ -176,6 +176,40 @@ export async function crearPedido(db: Firestore, uid: string, items: ItemNuevo[]
         precioCentavos: item.precioCentavos,
         cantidad: item.cantidad,
       })),
+      total,
+      estado: "Pendiente",
+      creadoEn: Timestamp.now(),
+      pagadoEn: null,
+      canceladoEn: null,
+      metodo: null,
+      efectivo: null,
+      cobroActivoId: null,
+    })
+    return siguiente
+  })
+  return { id: pedido.id, numero }
+}
+
+export async function crearPedidoLibre(
+  db: Firestore,
+  uid: string,
+  totalCentavos: number,
+  concepto: string | null,
+): Promise<{ id: string; numero: number } | null> {
+  const total = Math.trunc(totalCentavos)
+  if (total <= 0 || total > MAXIMO_LIBRE_CENTAVOS) return null
+  const limpio = concepto ? limitarNombre(concepto).trim() : ""
+  const contador = doc(negocio(db, uid), "contadores", "pedidos")
+  const pedido = doc(collection(negocio(db, uid), "pedidos"))
+  const numero = await runTransaction(db, async (tx) => {
+    const snap = await tx.get(contador)
+    const siguiente = (snap.exists() ? entero(snap.data().valor) : 0) + 1
+    tx.set(contador, { valor: siguiente })
+    tx.set(pedido, {
+      numero: siguiente,
+      tipo: "libre",
+      concepto: limpio.length > 0 ? limpio : null,
+      items: [],
       total,
       estado: "Pendiente",
       creadoEn: Timestamp.now(),

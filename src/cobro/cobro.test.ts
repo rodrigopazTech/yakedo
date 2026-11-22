@@ -315,6 +315,7 @@ describe("pantallas", () => {
     expect(qr.cuenta).toContain("6:00 para pagar")
     expect(qr.advertencia).toContain("no se puede anular")
     expect(subtituloQr(43, 4, true, AHORA)).toContain("el mismo QR de las")
+    expect(subtituloQr(45, 0, false, AHORA, "Cobro libre · Abono de Don Pepe")).toBe("Ticket #0045 · Cobro libre · Abono de Don Pepe")
     expect(vistaQr({
       numero: 43, piezas: 4, totalCentavos: 12200, creadoEn: AHORA, venceEn: AHORA, restanteMs: 1, mismo: true, otro: true, destacados,
     }).otro).toBe("Es otro cobro. Que pague solo uno.")

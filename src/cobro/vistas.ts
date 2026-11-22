@@ -12,8 +12,9 @@ export const TEXTO_QUE_BANCOS = "¿Qué bancos sirven?"
 export const TEXTO_VER_TICKET = "Ver ticket"
 export const TEXTO_DEVUELVE = "Devuélvelo desde la app de tu banco."
 
-export function subtituloQr(numero: number, piezas: number, mismo: boolean, creadoEn: number): string {
+export function subtituloQr(numero: number, piezas: number, mismo: boolean, creadoEn: number, detalle?: string | null): string {
   if (mismo) return `Ticket ${formatoNumero(numero)} · el mismo QR de las ${horaMexico(creadoEn)}`
+  if (detalle) return `Ticket ${formatoNumero(numero)} · ${detalle}`
   return `Ticket ${formatoNumero(numero)} · ${textoPiezas(piezas)}`
 }
 
@@ -27,11 +28,12 @@ export function vistaQr(entrada: {
   mismo: boolean
   otro: boolean
   destacados: string[]
+  detalle?: string | null
 }) {
   return {
     titulo: "Cobro con CoDi",
     verTicket: TEXTO_VER_TICKET,
-    subtitulo: subtituloQr(entrada.numero, entrada.piezas, entrada.mismo, entrada.creadoEn),
+    subtitulo: subtituloQr(entrada.numero, entrada.piezas, entrada.mismo, entrada.creadoEn, entrada.detalle),
     totalEtiqueta: "Total a pagar",
     total: pesosFijos(entrada.totalCentavos),
     linea: lineaBancos(entrada.destacados),
