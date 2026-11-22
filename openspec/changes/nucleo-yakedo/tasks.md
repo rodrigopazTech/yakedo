@@ -14,15 +14,15 @@
 
 ## 2. Catálogo y núcleo de venta (ROD-386)
 
-- [ ] 2.1 Categorías y productos en Firestore con las validaciones aprobadas (40 letras, centavos). Verificación: pruebas de validación y de reglas.
-- [ ] 2.2 Catálogo vacío («Arma tu catálogo»), «Editar» y Ajustes como entradas; sin filtro «Todas» en la venta. Verificación: pruebas de pantalla.
-- [ ] 2.3 «Agotado hoy», quitar un producto y foto opcional en Firebase Storage, con iniciales si no hay foto. Verificación: subir, mostrar e impedir el acceso de otro negocio en el emulador de Storage.
-- [ ] 2.4 Pantalla de venta horizontal con el ticket y el número de pedido. Verificación: se ve bien en tablet horizontal y pantalla grande; el número sale del contador por negocio dentro de una transacción de Firestore (prueba con dos pedidos simultáneos).
-- [ ] 2.5 Método de pago y cobro en efectivo con cambio y «¡Ya quedó!». Verificación: pruebas de cálculo de cambio y de estados.
-- [ ] 2.6 Pendientes, estados del pedido y cancelación manual bloqueada con un cobro activo. Verificación: pruebas de cada estado. Depende de P21.
-- [ ] 2.7 Historial por día, detalle del ticket y tarjetas de totales por fecha de pago, con «por devolver» solo en CoDi. Verificación: pruebas de totales con los ejemplos de la spec (P17 para la zona horaria).
-- [ ] 2.8 Pruebas unitarias del cálculo de estados y totales. Verificación: la suite pasa.
-- [ ] 2.9 Diseño responsivo fase uno: escritorio y tablet horizontal según los marcos «Tablet H» de Figma. Verificación: revisión en esos dos tamaños; no se improvisan pantallas chicas.
+- [x] 2.1 Categorías y productos en Firestore con las validaciones aprobadas (40 letras, centavos). Verificación: pruebas de validación y de reglas.
+- [x] 2.2 Catálogo vacío («Arma tu catálogo»), «Editar» y Ajustes como entradas; sin filtro «Todas» en la venta. Verificación: pruebas de pantalla.
+- [x] 2.3 «Agotado hoy», quitar un producto y foto opcional en Firebase Storage, con iniciales si no hay foto. Verificación: subir, mostrar e impedir el acceso de otro negocio en el emulador de Storage.
+- [x] 2.4 Pantalla de venta horizontal con el ticket y el número de pedido. Verificación: se ve bien en tablet horizontal y pantalla grande; el número sale del contador por negocio dentro de una transacción de Firestore (prueba con dos pedidos simultáneos).
+- [x] 2.5 Método de pago y cobro en efectivo con cambio y «¡Ya quedó!». Verificación: pruebas de cálculo de cambio y de estados.
+- [x] 2.6 Pendientes, estados del pedido y cancelación manual bloqueada con un cobro activo. Verificación: pruebas de cada estado. Depende de P21.
+- [x] 2.7 Historial por día, detalle del ticket y tarjetas de totales por fecha de pago, con «por devolver» solo en CoDi. Verificación: pruebas de totales con los ejemplos de la spec (P17 para la zona horaria).
+- [x] 2.8 Pruebas unitarias del cálculo de estados y totales. Verificación: la suite pasa.
+- [x] 2.9 Diseño responsivo fase uno: escritorio y tablet horizontal según los marcos «Tablet H» de Figma. Verificación: revisión en esos dos tamaños; no se improvisan pantallas chicas.
 
 ## 3. Cobro con CoDi y Pey
 

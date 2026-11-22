@@ -347,8 +347,6 @@ export function PantallaCobrar({
             </button>
           </div>
         ) : null}
-        {/* UI PROVISIONAL: falta en Figma la acción de dividir; se dibuja y no hace nada. */}
-        <p className="cobrar-dividir">¿Van a pagar por separado? Dividir cuenta</p>
       </section>
     </main>
   )

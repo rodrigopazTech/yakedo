@@ -396,6 +396,7 @@ export function PantallaAjustes({
   alReenviarAviso,
   seccionNegocio,
   alCatalogo,
+  alEditarCatalogo,
 }: {
   usuario: UsuarioSesion
   metodo: MetodoEntrada
@@ -412,6 +413,7 @@ export function PantallaAjustes({
   alReenviarAviso: () => void
   seccionNegocio?: ReactNode
   alCatalogo?: () => void
+  alEditarCatalogo?: () => void
 }) {
   const entroCon = textoEntrasteCon(usuario, metodo)
 
@@ -443,9 +445,10 @@ export function PantallaAjustes({
         <section className="ajustes-tarjeta" aria-label="Catálogo">
           <h2>Catálogo</h2>
           <p>{TEXTO_CATALOGO_APOYO}</p>
-          <p className="ajustes-fila">
+          <button className="fila-ajuste" type="button" onClick={alEditarCatalogo}>
             <span>Editar catálogo</span>
-          </p>
+            <strong>Categorías y productos</strong>
+          </button>
         </section>
         {!usuario.telefono ? (
           // UI PROVISIONAL: falta en Figma
