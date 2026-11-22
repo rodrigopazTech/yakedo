@@ -1,0 +1,155 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap");
+
+/*
+ * Único archivo de estilos de Yakedo.
+ * Paleta y fuente de marca. El diseño de producto llega con Figma.
+ * Pensado primero para tablet horizontal y escritorio: la fila no se parte.
+ */
+
+:root {
+  --color-marca: #1F4FD1;
+  --color-marca-oscuro: #163AA8;
+  --color-acento: #FFB020;
+  --color-tinta: #1C1915;
+  --color-fondo: #F4EFE6;
+  --fuente-sans: "Plus Jakarta Sans", sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--fuente-sans);
+  color: var(--color-tinta);
+  background: var(--color-fondo);
+}
+
+.prueba {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100%;
+}
+
+.prueba-lado {
+  flex: 0 0 18rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2.5rem 2rem;
+  background: var(--color-marca);
+  color: var(--color-fondo);
+}
+
+.prueba-lado h1 {
+  margin: 0;
+  font-size: 2.75rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.prueba-lado p {
+  margin: 0.85rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.prueba-acento {
+  width: 4.5rem;
+  height: 0.45rem;
+  margin-top: 1.5rem;
+  border-radius: 999px;
+  background: var(--color-acento);
+}
+
+.prueba-pie {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.prueba-cuerpo {
+  flex: 1;
+  padding: 2.5rem 2.75rem 3rem;
+}
+
+.prueba-cuerpo h2 {
+  margin: 0;
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.prueba-cuerpo > p {
+  max-width: 40rem;
+  margin: 0.75rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.muestras {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.muestras > li {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.muestra {
+  margin: 0;
+}
+
+.muestra-color {
+  width: 100%;
+  height: 7.5rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-tinta) 14%, transparent);
+}
+
+.muestra figcaption {
+  margin-top: 0.75rem;
+}
+
+.muestra strong {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.muestra span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.nota {
+  display: inline-block;
+  margin: 2.25rem 0 0;
+  padding: 0.7rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--color-marca-oscuro);
+  color: var(--color-fondo);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
