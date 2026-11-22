@@ -1,0 +1,45 @@
+schema: spec-driven
+
+context: |
+  Yakedo (antes CodiPey) es un punto de venta gratuito: app web con diseño horizontal primero
+  (tablet o pantalla grande), publicada en Firebase Hosting. Cobra en efectivo y con CoDi a través
+  de la API de Pey; todas las llamadas a Pey salen de Cloud Functions, nunca del cliente.
+  Stack: React, Vite, TypeScript y Firebase (Auth con teléfono por SMS y Google, Firestore, Functions, Hosting).
+  Los artefactos se escriben en español mexicano. Las palabras clave del formato de OpenSpec van en inglés
+  porque el validador las exige: SHALL equivale a "debe", WHEN a "cuando", THEN a "entonces",
+  GIVEN a "dado que" y AND a "y". El contenido de cada escenario va en español.
+  Los textos de pantalla aprobados por Rodrigo se citan tal cual, entre comillas angulares.
+  Vocabulario obligatorio de la app: "números" (no "dígitos"), "aviso" (no "notificación"), "activo" (no "vivo").
+  Si un dato no está en Linear, Figma o las instrucciones, se anota como pregunta abierta; no se inventan
+  endpoints ni reglas de Pey o CoDi.
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

@@ -1,0 +1,39 @@
+# Secretos y variables de entorno: nunca van al repo
+.env
+.env.*
+!.env.example
+*.env
+.env.local
+.env.*.local
+.secret.local
+.runtimeconfig.json
+functions/.env
+functions/.env.*
+!functions/.env.example
+
+# Llaves y credenciales
+*.pem
+*.key
+*.p12
+serviceAccount*.json
+*-service-account*.json
+*firebase-adminsdk*.json
+credentials.json
+.firebase/
+.firebaserc.local
+
+# Dependencias y compilados
+node_modules/
+dist/
+build/
+coverage/
+*.log
+npm-debug.log*
+.DS_Store
+.vite/
+
+# Emuladores de Firebase
+firebase-debug.log*
+firestore-debug.log
+ui-debug.log
+.emulator-data/
