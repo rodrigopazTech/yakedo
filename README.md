@@ -33,7 +33,7 @@ La llave de Pey (`PEY_API_KEY`) y el secreto del webhook (`PEY_WEBHOOK_SECRET`) 
 npm run dev
 ```
 
-Abre la pantalla de prueba en `http://127.0.0.1:5173`. Esa vista revisa Plus Jakarta Sans y la paleta. El punto de venta se construye después, con Figma.
+Abre el acceso en `http://127.0.0.1:5173`: bienvenida, teléfono, código SMS, Google y Ajustes. La paleta y Plus Jakarta Sans siguen en `src/estilos.css`.
 
 Con `.env.local` completo, `npm run dev` conecta Auth, Firestore, Functions y Storage a los emuladores de `127.0.0.1`.
 
@@ -71,4 +71,4 @@ Compila la web (`tsc` y Vite) y las Cloud Functions (`functions/`, salida en `fu
 npm test
 ```
 
-Vitest corre la prueba de la paleta y comprueba que la configuración web no viene embebida.
+Vitest corre la paleta, el acceso y, si hace falta, levanta el emulador de Auth en `127.0.0.1:9099`. El número de prueba de los jueces no se guarda en el repositorio.

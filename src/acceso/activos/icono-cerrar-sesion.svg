@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="4.8125" height="4.8125" viewBox="0 0 4.8125 4.8125" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icon/log-out" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M1.80469 4.21094H1.0026C0.896241 4.21094 0.794235 4.16868 0.719025 4.09347C0.643815 4.01827 0.601563 3.91626 0.601562 3.8099V1.0026C0.601562 0.896241 0.643815 0.794235 0.719025 0.719025C0.794235 0.643815 0.896241 0.601563 1.0026 0.601562H1.80469" stroke-width="0.401042" stroke-linecap="round" stroke-linejoin="round" stroke="#1C1915"/>
+<path id="Vector_2" d="M3.20832 3.40886L4.21093 2.40625L3.20832 1.40365" stroke-width="0.401042" stroke-linecap="round" stroke-linejoin="round" stroke="#1C1915"/>
+<path id="Vector_3" d="M4.21094 2.40625H1.80469" stroke-width="0.401042" stroke-linecap="round" stroke-linejoin="round" stroke="#1C1915"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="4.8125" height="4.8125" fill="white"/>
+</clipPath>
+</defs>
+</svg>
