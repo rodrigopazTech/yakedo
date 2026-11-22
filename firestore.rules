@@ -18,6 +18,13 @@ service cloud.firestore {
         == (sinCobro(request.resource.data) ? null : request.resource.data.cobroActivoId);
     }
 
+    function cobroSigueActivo(uid, pedidoId) {
+      return !sinCobro(resource.data) && (
+        !exists(/databases/$(database)/documents/negocios/$(uid)/pedidos/$(pedidoId)/cobros/$(resource.data.cobroActivoId))
+        || get(/databases/$(database)/documents/negocios/$(uid)/pedidos/$(pedidoId)/cobros/$(resource.data.cobroActivoId)).data.venceEn > request.time
+      );
+    }
+
     match /config/{documento} {
       allow read: if sesion();
       allow write: if false;
@@ -61,16 +68,46 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      function textoCorto(valor) {
+        return valor is string && valor.size() > 0 && valor.size() <= 40;
+      }
+
+      function productoValido() {
+        return textoCorto(request.resource.data.nombre)
+          && request.resource.data.precioCentavos is int
+          && request.resource.data.precioCentavos > 0
+          && request.resource.data.precioCentavos <= 100000000
+          && (request.resource.data.categoriaId == null || request.resource.data.categoriaId is string)
+          && (request.resource.data.agotadoEl == null || request.resource.data.agotadoEl is string)
+          && request.resource.data.tieneFoto is bool
+          && request.resource.data.keys().hasOnly(['nombre', 'precioCentavos', 'categoriaId', 'agotadoEl', 'tieneFoto']);
+      }
+
       match /categorias/{id} {
-        allow read, write: if dueno(uid);
+        allow read: if dueno(uid);
+        allow delete: if dueno(uid);
+        allow create, update: if dueno(uid)
+          && textoCorto(request.resource.data.nombre)
+          && request.resource.data.keys().hasOnly(['nombre']);
       }
 
       match /productos/{id} {
-        allow read, write: if dueno(uid);
+        allow read: if dueno(uid);
+        allow delete: if dueno(uid);
+        allow create, update: if dueno(uid) && productoValido();
       }
 
       match /contadores/{id} {
-        allow read, write: if dueno(uid);
+        allow read: if dueno(uid);
+        allow create: if dueno(uid)
+          && id == 'pedidos'
+          && request.resource.data.valor == 1
+          && request.resource.data.keys().hasOnly(['valor']);
+        allow update: if dueno(uid)
+          && id == 'pedidos'
+          && request.resource.data.valor is int
+          && request.resource.data.valor == resource.data.valor + 1
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['valor']);
       }
 
       match /pedidos/{pedidoId} {
@@ -92,7 +129,7 @@ service cloud.firestore {
           )
           && (
             request.resource.data.estado != 'Cancelado'
-            || sinCobro(resource.data)
+            || !cobroSigueActivo(uid, pedidoId)
           );
 
         match /cobros/{cobroId} {

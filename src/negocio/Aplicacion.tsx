@@ -15,6 +15,7 @@ import {
 } from "./dominio/alta.ts"
 import { cuentaVisible, revisarClabe, soloNumeros } from "./dominio/clabe.ts"
 import { motivoCobroApagado, puedeCambiarClabe, tramiteAbierto, type CuentaDocumento, type NegocioGuardado } from "./dominio/cuenta.ts"
+import { Nucleo } from "../venta/Nucleo.tsx"
 import {
   AvisoCuenta,
   DialogoAyudaClabe,
@@ -24,14 +25,12 @@ import {
   MarcoCargando,
   PantallaAlta,
   PantallaCambiar,
-  PantallaCobrar,
   PantallaEstado,
   PantallaNombre,
-  PantallaVenta,
 } from "./pantallas.tsx"
 import { crearServicioNegocio, escucharNegocio, mensajeDeError, type ServicioNegocio } from "./servicio.ts"
 
-type Vista = "cargando" | "alta" | "estado" | "venta" | "ajustes" | "cambiar" | "cobrar" | "nombre"
+type Vista = "cargando" | "alta" | "estado" | "venta" | "ajustes" | "cambiar" | "nombre"
 
 export function Aplicacion({
   usuario,
@@ -58,10 +57,11 @@ export function Aplicacion({
   alConfirmarCierre: () => void
   alVincular: () => void
 }) {
-  const servicio = useMemo<ServicioNegocio | null>(() => {
-    const firebase = datosDeFirebase()
-    return firebase ? crearServicioNegocio(firebase.functions, firebase.db) : null
-  }, [])
+  const firebase = useMemo(() => datosDeFirebase(), [])
+  const servicio = useMemo<ServicioNegocio | null>(
+    () => (firebase ? crearServicioNegocio(firebase.functions, firebase.db) : null),
+    [firebase],
+  )
 
   const [vista, setVista] = useState<Vista>("cargando")
   const [negocio, setNegocio] = useState<NegocioGuardado | null>(null)
@@ -78,6 +78,7 @@ export function Aplicacion({
   const [confirmar, setConfirmar] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [falloVisto, setFalloVisto] = useState<string | null>(null)
+  const [pedirEdicion, setPedirEdicion] = useState(false)
   const llegada = useRef(false)
   const previa = useRef<CuentaDocumento | null>(null)
   const actualId = cuenta?.actual?.bankAccountId
@@ -251,17 +252,19 @@ export function Aplicacion({
           }}
         />
       ) : null}
-      {vista === "venta" && negocio ? (
-        <PantallaVenta
+      {vista === "venta" && negocio && firebase ? (
+        <Nucleo
+          uid={usuario.uid}
           nombre={negocio.nombre}
-          aviso={avisoCatalogo}
+          db={firebase.db}
+          storage={firebase.storage}
+          motivo={motivo}
+          avisoRevision={avisoCatalogo !== null}
+          pedirEdicion={pedirEdicion}
+          alEdicionAbierta={() => setPedirEdicion(false)}
           alAjustes={() => setVista("ajustes")}
-          alCobrar={() => setVista("cobrar")}
           alEstado={() => setVista("estado")}
         />
-      ) : null}
-      {vista === "cobrar" ? (
-        <PantallaCobrar motivo={motivo} alCerrar={() => setVista("venta")} alEstado={() => setVista("estado")} />
       ) : null}
       {vista === "cambiar" && negocio && cuenta?.actual ? (
         <PantallaCambiar
@@ -311,8 +314,14 @@ export function Aplicacion({
           alCancelarCierre={alCancelarCierre}
           alConfirmarCierre={alConfirmarCierre}
           alVincular={alVincular}
-          alCatalogo={() => setVista("venta")}
-          alEditarCatalogo={() => setVista("venta")}
+          alCatalogo={() => {
+            setPedirEdicion(true)
+            setVista("venta")
+          }}
+          alEditarCatalogo={() => {
+            setPedirEdicion(true)
+            setVista("venta")
+          }}
           nombreNegocio={negocio.nombre}
           cuentaCobro={cuenta?.actual ? cuentaVisible(cuenta.actual.banco, cuenta.actual.ultimos4) : null}
           cuentaNueva={

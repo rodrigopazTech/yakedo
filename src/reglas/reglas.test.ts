@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs"
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing"
+import type { Firestore } from "firebase/firestore"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { formatoNumero } from "../venta/dominio.ts"
+import { crearPedido } from "../venta/repositorio.ts"
 
 const PROYECTO = "yakedo-pos"
 let entorno: RulesTestEnvironment
@@ -80,7 +83,15 @@ describe("reglas de Firestore y Storage", () => {
   it("deja leer y escribir el catálogo propio", async () => {
     const ana = entorno.authenticatedContext("ana").firestore()
     await assertSucceeds(ana.collection("negocios").doc("ana").collection("categorias").doc("cafe").get())
-    await assertSucceeds(ana.collection("negocios").doc("ana").collection("productos").doc("p").set({ nombre: "Latte" }))
+    await assertSucceeds(
+      ana.collection("negocios").doc("ana").collection("productos").doc("p").set({
+        nombre: "Latte",
+        precioCentavos: 4500,
+        categoriaId: "cafe",
+        agotadoEl: null,
+        tieneFoto: false,
+      }),
+    )
   })
 
   it("rechaza a otro negocio y a quien no tiene sesión", async () => {
@@ -156,6 +167,42 @@ describe("reglas de Firestore y Storage", () => {
     await assertFails(entorno.unauthenticatedContext().storage().ref(ruta).getMetadata())
     await assertFails(subir("beto", ruta))
     await assertFails(subir("ana", "negocios/beto/productos/latte/foto"))
+  })
+
+  it("exige nombre de hasta 40 letras y precio en centavos", async () => {
+    const ana = entorno.authenticatedContext("ana").firestore()
+    const productos = ana.collection("negocios").doc("ana").collection("productos")
+    const valido = { nombre: "Latte", precioCentavos: 4500, categoriaId: null, agotadoEl: null, tieneFoto: false }
+    await assertFails(productos.doc("largo").set({ ...valido, nombre: "A".repeat(41) }))
+    await assertFails(productos.doc("vacio").set({ ...valido, nombre: "" }))
+    await assertFails(productos.doc("cero").set({ ...valido, precioCentavos: 0 }))
+    await assertFails(productos.doc("decimal").set({ ...valido, precioCentavos: 10.5 }))
+    await assertSucceeds(ana.collection("negocios").doc("ana").collection("categorias").doc("nueva").set({ nombre: "Bebidas" }))
+    await assertFails(ana.collection("negocios").doc("ana").collection("categorias").doc("mala").set({ nombre: "A".repeat(41) }))
+  })
+
+  it("asigna números distintos a dos pedidos simultáneos", async () => {
+    const compat = entorno.authenticatedContext("ana").firestore() as unknown as { _delegate: Firestore }
+    const item = { productoId: "p", nombre: "Café americano", precioCentavos: 3500, cantidad: 2 }
+    const [uno, dos] = await Promise.all([
+      crearPedido(compat._delegate, "ana", [item]),
+      crearPedido(compat._delegate, "ana", [{ ...item, nombre: "Tamal verde", precioCentavos: 2200, cantidad: 1 }]),
+    ])
+    expect(uno.numero).not.toBe(dos.numero)
+    expect(formatoNumero(Math.min(uno.numero, dos.numero))).toBe("#0001")
+    expect(formatoNumero(Math.max(uno.numero, dos.numero))).toBe("#0002")
+  })
+
+  it("deja cancelar cuando el cobro ya venció", async () => {
+    await entorno.withSecurityRulesDisabled(async (contexto) => {
+      const pedido = contexto.firestore().collection("negocios").doc("ana").collection("pedidos").doc("vencido")
+      await pedido.set({ estado: "Pendiente", cobroActivoId: "c1", total: 1000 })
+      await pedido.collection("cobros").doc("c1").set({ estado: "activo", venceEn: new Date(Date.now() - 60_000) })
+    })
+    const ana = entorno.authenticatedContext("ana").firestore()
+    await assertSucceeds(
+      ana.collection("negocios").doc("ana").collection("pedidos").doc("vencido").update({ estado: "Cancelado" }),
+    )
   })
 
   it("el emulador cargó las reglas", () => {

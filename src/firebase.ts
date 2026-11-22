@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions, type Functions } from "firebase/functions";
-import { connectStorageEmulator, getStorage } from "firebase/storage";
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from "firebase/storage";
 import { crearServicioFirebase } from "./acceso/servicio-firebase.ts";
 import type { ServicioAuth } from "./acceso/tipos.ts";
 import {
@@ -70,10 +70,10 @@ export function iniciarFirebase(): FirebaseApp | null {
   return app;
 }
 
-export function datosDeFirebase(): { db: Firestore; functions: Functions } | null {
+export function datosDeFirebase(): { db: Firestore; functions: Functions; storage: FirebaseStorage } | null {
   const app = iniciarFirebase();
   if (!app) return null;
-  return { db: getFirestore(app), functions: getFunctions(app) };
+  return { db: getFirestore(app), functions: getFunctions(app), storage: getStorage(app) };
 }
 
 export function servicioDeAuth(): ServicioAuth | null {
