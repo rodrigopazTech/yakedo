@@ -12,6 +12,7 @@ export interface SolicitudCuenta {
 
 export interface CuentaCreada {
   bankAccountId: string
+  estado: EstadoCuentaPey | null
 }
 
 export interface CuentaConsultada {
@@ -43,29 +44,35 @@ function texto(valor: unknown): string | null {
   return typeof valor === "string" && valor.trim() ? valor.trim() : null
 }
 
-/**
- * POST /bank-account. La spec nombra el identificador `bankAccountId`.
- * No se leen otros campos de la respuesta.
- */
-export function leerCuentaCreada(json: unknown): CuentaCreada {
-  const id = texto(comoObjeto(json).bankAccountId)
-  if (!id) throw new ErrorPey(200, "Pey no devolvió bankAccountId.")
-  return { bankAccountId: id }
+/** spike Pey 16 nov: POST /bank-account → {id, codiStatus} */
+function leerEstadoPey(obj: Record<string, unknown>): EstadoCuentaPey | null {
+  const crudo = texto(obj.codiStatus) ?? texto(obj.status)
+  if (!crudo || !esEstadoPey(crudo)) return null
+  return crudo
 }
 
 /**
- * GET /bank-account/:id. Los estados documentados son PENDING, PROCESSING, ACTIVE y ERROR.
- * El nombre del campo no está en la spec: se prueba `status`, luego `state`, luego `estado`.
+ * POST /bank-account.
+ * spike Pey 16 nov: POST /bank-account → {id, codiStatus}
+ * `bankAccountId` queda solo como respaldo del `id`.
+ */
+export function leerCuentaCreada(json: unknown): CuentaCreada {
+  const obj = comoObjeto(json)
+  const id = texto(obj.id) ?? texto(obj.bankAccountId)
+  if (!id) throw new ErrorPey(200, "Pey no devolvió bankAccountId.")
+  return { bankAccountId: id, estado: leerEstadoPey(obj) }
+}
+
+/**
+ * GET /bank-account/:id. El estado sale de `codiStatus` y, si no viene, de `status`.
  */
 export function leerCuentaConsultada(json: unknown, idEsperado: string): CuentaConsultada {
   const obj = comoObjeto(json)
-  const crudo = texto(obj.status) ?? texto(obj.state) ?? texto(obj.estado)
-  if (!crudo || !esEstadoPey(crudo)) {
-    throw new ErrorPey(200, "Pey no devolvió un estado de cuenta conocido.")
-  }
+  const estado = leerEstadoPey(obj)
+  if (!estado) throw new ErrorPey(200, "Pey no devolvió un estado de cuenta conocido.")
   return {
     bankAccountId: texto(obj.bankAccountId) ?? idEsperado,
-    estado: crudo,
+    estado,
   }
 }
 
@@ -94,11 +101,10 @@ export function leerEventoPey(json: unknown): EventoPey {
   const tipo = texto(obj.type) ?? texto(obj.event) ?? ""
   const anidado = obj.data ?? obj.payload
   const datos = anidado && typeof anidado === "object" ? comoObjeto(anidado) : obj
-  const crudo = texto(datos.status) ?? texto(datos.state) ?? texto(datos.estado)
   return {
     tipo,
-    bankAccountId: texto(datos.bankAccountId),
-    estado: crudo && esEstadoPey(crudo) ? crudo : null,
+    bankAccountId: texto(datos.id) ?? texto(datos.bankAccountId),
+    estado: leerEstadoPey(datos),
     datos,
   }
 }

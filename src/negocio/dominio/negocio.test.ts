@@ -5,7 +5,7 @@ import { codiDisponible, motivoCobroApagado, puedeCambiarClabe, type BloqueCuent
 import { verificarFirma, hmacSha256 } from "./firma.ts"
 import { MemoriaNegocio } from "./memoria.ts"
 import { cambiarClabe, consultarCuenta, elegirSeguirConActual, ErrorDeNegocio, recibirEvento, registrarNegocio } from "./operaciones.ts"
-import { crearClientePey, PEY_BASE, type ClientePey } from "./pey.ts"
+import { crearClientePey, leerCuentaConsultada, leerCuentaCreada, leerEventoPey, PEY_BASE, type ClientePey } from "./pey.ts"
 
 const SECRETO = "whsec_" + btoa("secreto-de-prueba-yakedo")
 
@@ -27,9 +27,10 @@ function peyFalso(opciones?: { status?: number; id?: string; estado?: string; cu
       return new Response(JSON.stringify({ message: "no" }), { status: opciones?.status ?? 400 })
     }
     if (url.includes("/bank-account/") && (init?.method ?? "GET") === "GET") {
-      return new Response(JSON.stringify(opciones?.cuerpo ?? { status: opciones?.estado ?? "ACTIVE", bankAccountId: "ba_1" }))
+      const id = opciones?.id ?? "ba_1"
+      return new Response(JSON.stringify(opciones?.cuerpo ?? { id, codiStatus: opciones?.estado ?? "ACTIVE" }))
     }
-    return new Response(JSON.stringify(opciones?.cuerpo ?? { bankAccountId: opciones?.id ?? "ba_1" }))
+    return new Response(JSON.stringify(opciones?.cuerpo ?? { id: opciones?.id ?? "ba_1", codiStatus: "PENDING" }))
   }
   const cliente = crearClientePey({ apiKey: "llave-de-prueba", fetch: fetchMock, baseUrl: PEY_BASE })
   return Object.assign(cliente, { llamadas })
@@ -131,7 +132,7 @@ describe("registrar y cambiar con Pey simulado", () => {
 
   it("cambia la CLABE sin quitar la actual y solo una vez", async () => {
     const repo = new MemoriaNegocio()
-    await registrarNegocio(alta, repo, peyFalso({ id: "ba_actual", cuerpo: { bankAccountId: "ba_actual" } }))
+    await registrarNegocio(alta, repo, peyFalso({ id: "ba_actual", cuerpo: { id: "ba_actual", codiStatus: "PENDING" } }))
     await repo.aplicarEstado("ba_actual", "ACTIVE")
     const nueva = completarClabe("01432055667788901")
     const pey = peyFalso({ id: "ba_nueva" })
@@ -210,6 +211,26 @@ describe("registrar y cambiar con Pey simulado", () => {
   })
 })
 
+describe("forma de Pey", () => {
+  it("lee id y codiStatus, con bankAccountId y status de respaldo", () => {
+    expect(leerCuentaCreada({ id: "ba_1", codiStatus: "PENDING" })).toEqual({
+      bankAccountId: "ba_1",
+      estado: "PENDING",
+    })
+    expect(leerCuentaCreada({ bankAccountId: "ba_viejo" }).bankAccountId).toBe("ba_viejo")
+    expect(leerCuentaConsultada({ codiStatus: "ACTIVE" }, "ba_1").estado).toBe("ACTIVE")
+    expect(leerCuentaConsultada({ status: "PROCESSING" }, "ba_1").estado).toBe("PROCESSING")
+    expect(leerEventoPey({ type: "bank.account.updated", data: { id: "ba_1", codiStatus: "ACTIVE" } })).toMatchObject({
+      bankAccountId: "ba_1",
+      estado: "ACTIVE",
+    })
+    expect(leerEventoPey({ type: "bank.account.updated", data: { bankAccountId: "ba_2", status: "ERROR" } })).toMatchObject({
+      bankAccountId: "ba_2",
+      estado: "ERROR",
+    })
+  })
+})
+
 describe("webhook", () => {
   async function firmado(cuerpo: string, id = "msg_1", secreto = SECRETO) {
     const marca = String(Math.floor(Date.now() / 1000))
@@ -218,7 +239,7 @@ describe("webhook", () => {
   }
 
   it("acepta la firma sobre el cuerpo crudo y rechaza otra", async () => {
-    const cuerpo = JSON.stringify({ type: "bank.account.updated", data: { bankAccountId: "ba_1", status: "ACTIVE" } })
+    const cuerpo = JSON.stringify({ type: "bank.account.updated", data: { id: "ba_1", codiStatus: "ACTIVE" } })
     const bueno = await firmado(cuerpo)
     expect(await verificarFirma({ ...bueno, secreto: SECRETO, ahora: Date.now() })).toEqual({ ok: true })
     const tocado = cuerpo.replace("ACTIVE", "ERROR")
@@ -228,7 +249,7 @@ describe("webhook", () => {
   it("activa la cuenta una sola vez por webhook-id", async () => {
     const repo = new MemoriaNegocio()
     await registrarNegocio(alta, repo, peyFalso({ id: "ba_1" }))
-    const cuerpo = JSON.stringify({ type: "bank.account.updated", data: { bankAccountId: "ba_1", status: "ACTIVE" } })
+    const cuerpo = JSON.stringify({ type: "bank.account.updated", data: { id: "ba_1", codiStatus: "ACTIVE" } })
     expect(await recibirEvento("msg_1", cuerpo, repo)).toBe("cuenta")
     expect((await repo.leer("ana")).cuenta?.actual?.estado).toBe("ACTIVE")
     expect(await recibirEvento("msg_1", cuerpo, repo)).toBe("repetido")
