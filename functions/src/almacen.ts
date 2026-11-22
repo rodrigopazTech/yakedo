@@ -1,5 +1,8 @@
-import { getFirestore, type Firestore } from "firebase-admin/firestore"
-import { siguienteCuenta, type CuentaDocumento, type EstadoCuentaPey, type NegocioGuardado, type Privado } from "../../src/negocio/dominio/cuenta.ts"
+import { getFirestore, Timestamp, type Firestore, type Transaction } from "firebase-admin/firestore"
+import { aplicarPago, type Registro, type TxCobro } from "../../src/cobro/resolucion.ts"
+import type { CobroGuardado, CobroNuevo, PedidoParaCobro } from "../../src/cobro/modelo.ts"
+import type { PagoQr } from "../../src/cobro/pey-qr.ts"
+import { codiDisponible, siguienteCuenta, type CuentaDocumento, type EstadoCuentaPey, type NegocioGuardado, type Privado } from "../../src/negocio/dominio/cuenta.ts"
 import type { AltaPersistida, EstadoLocal, NuevaPersistida, RepositorioNegocio, ResultadoEstado } from "../../src/negocio/dominio/repositorio.ts"
 
 function cuentaDe(valor: unknown): CuentaDocumento | null {
@@ -15,6 +18,56 @@ function negocioDe(valor: unknown): NegocioGuardado | null {
 function privadoDe(valor: unknown): Privado | null {
   if (!valor || typeof valor !== "object") return null
   return valor as Privado
+}
+
+function millis(valor: unknown): number {
+  if (typeof valor === "number") return valor
+  if (valor && typeof valor === "object" && "toMillis" in valor && typeof (valor as { toMillis: () => number }).toMillis === "function") {
+    return (valor as { toMillis: () => number }).toMillis()
+  }
+  return 0
+}
+
+function plano(valor: unknown): unknown {
+  if (valor instanceof Timestamp) return valor.toMillis()
+  if (Array.isArray(valor)) return valor.map((item) => plano(item))
+  if (valor && typeof valor === "object") {
+    const salida: Registro = {}
+    for (const [clave, item] of Object.entries(valor as Registro)) salida[clave] = plano(item) as never
+    return salida
+  }
+  return valor
+}
+
+function conTiempos(valor: unknown): unknown {
+  if (Array.isArray(valor)) return valor.map((item) => conTiempos(item))
+  if (valor && typeof valor === "object") {
+    const salida: Registro = {}
+    for (const [clave, item] of Object.entries(valor as Registro)) {
+      salida[clave] =
+        typeof item === "number" && (clave === "datePaid" || clave.endsWith("En"))
+          ? Timestamp.fromMillis(item)
+          : (conTiempos(item) as never)
+    }
+    return salida
+  }
+  return valor
+}
+
+function txDe(db: Firestore, tx: Transaction): TxCobro {
+  return {
+    async leer(ruta) {
+      const snap = await tx.get(db.doc(ruta))
+      if (!snap.exists) return null
+      return plano(snap.data()) as Registro
+    },
+    escribir(ruta, datos) {
+      tx.set(db.doc(ruta), conTiempos(datos) as Registro)
+    },
+    fusionar(ruta, datos) {
+      tx.update(db.doc(ruta), conTiempos(datos) as Registro)
+    },
+  }
 }
 
 /** Escrituras de Admin SDK: no pasan por las reglas del cliente. */
@@ -117,6 +170,89 @@ export function almacenFirestore(db: Firestore = getFirestore()): RepositorioNeg
         if (eventoCobro !== null) tx.set(db.doc(`eventosCobro/${id}`), { datos: eventoCobro })
         return "nuevo"
       })
+    },
+    async leerPedidoCobro(uid, pedidoId) {
+      const pedido = await db.doc(`negocios/${uid}/pedidos/${pedidoId}`).get()
+      if (!pedido.exists) return null
+      const cobros = await db.collection(`negocios/${uid}/pedidos/${pedidoId}/cobros`).get()
+      const estado = pedido.get("estado")
+      const cobroActivoId = pedido.get("cobroActivoId")
+      const leido: PedidoParaCobro = {
+        id: pedidoId,
+        numero: typeof pedido.get("numero") === "number" ? pedido.get("numero") : 0,
+        estado: estado === "Pagado" || estado === "Cancelado" ? estado : "Pendiente",
+        total: typeof pedido.get("total") === "number" ? pedido.get("total") : 0,
+        cobroActivoId: typeof cobroActivoId === "string" ? cobroActivoId : null,
+        cobros: cobros.docs.map((item) => ({
+          id: item.id,
+          venceEn: millis(item.get("venceEn")),
+          estado: typeof item.get("estado") === "string" ? item.get("estado") : "activo",
+          codiQrId: typeof item.get("codiQrId") === "string" ? item.get("codiQrId") : null,
+        })),
+      }
+      return leido
+    },
+    async bankAccountActivo(uid) {
+      const snap = await db.doc(`negocios/${uid}/cuenta/pey`).get()
+      const cuenta = cuentaDe(snap.data())
+      if (!codiDisponible(cuenta)) return null
+      return cuenta?.actual?.bankAccountId ?? null
+    },
+    async guardarCobroQr(datos: CobroNuevo) {
+      const pedidoRef = db.doc(`negocios/${datos.uid}/pedidos/${datos.pedidoId}`)
+      const cobroRef = pedidoRef.collection("cobros").doc(datos.cobroId)
+      await db.runTransaction(async (tx) => {
+        const pedido = await tx.get(pedidoRef)
+        if (!pedido.exists) return
+        tx.set(cobroRef, {
+          codiQrId: datos.codiQrId,
+          qrString: datos.qrString,
+          monto: datos.monto,
+          creadoEn: Timestamp.fromMillis(datos.creadoEn),
+          venceEn: Timestamp.fromMillis(datos.venceEn),
+          estado: "activo",
+          pagosResumen: [],
+        })
+        tx.set(db.doc(`cobrosQr/${datos.codiQrId}`), {
+          negocioId: datos.uid,
+          pedidoId: datos.pedidoId,
+          cobroId: datos.cobroId,
+        })
+        if (datos.seguirActivo && pedido.get("estado") === "Pendiente") {
+          tx.update(pedidoRef, { cobroActivoId: datos.cobroId })
+        }
+      })
+    },
+    async leerCobroQr(uid, pedidoId, cobroId) {
+      const pedido = await this.leerPedidoCobro(uid, pedidoId)
+      const snap = await db.doc(`negocios/${uid}/pedidos/${pedidoId}/cobros/${cobroId}`).get()
+      if (!pedido || !snap.exists) return null
+      const codiQrId = snap.get("codiQrId")
+      const qrString = snap.get("qrString")
+      if (typeof codiQrId !== "string" || typeof qrString !== "string") return null
+      const cobro: CobroGuardado = {
+        id: cobroId,
+        codiQrId,
+        qrString,
+        monto: typeof snap.get("monto") === "number" ? snap.get("monto") : pedido.total,
+        creadoEn: millis(snap.get("creadoEn")),
+        venceEn: millis(snap.get("venceEn")),
+        estado: typeof snap.get("estado") === "string" ? snap.get("estado") : "activo",
+        pedidoId,
+        numero: pedido.numero,
+      }
+      return cobro
+    },
+    async marcarCobroVencido(uid, pedidoId, cobroId) {
+      const ref = db.doc(`negocios/${uid}/pedidos/${pedidoId}/cobros/${cobroId}`)
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref)
+        if (!snap.exists || snap.get("estado") === "pagado") return
+        tx.update(ref, { estado: "vencido" })
+      })
+    },
+    async resolverPagoQr(webhookId: string, pago: PagoQr, ahora: number) {
+      return db.runTransaction(async (tx) => aplicarPago(txDe(db, tx), webhookId, pago, ahora))
     },
   }
 }

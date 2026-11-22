@@ -258,6 +258,7 @@ export function Aplicacion({
           nombre={negocio.nombre}
           db={firebase.db}
           storage={firebase.storage}
+          functions={firebase.functions}
           motivo={motivo}
           avisoRevision={avisoCatalogo !== null}
           pedirEdicion={pedirEdicion}

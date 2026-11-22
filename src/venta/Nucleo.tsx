@@ -1,6 +1,21 @@
-import { useEffect, useRef, useState } from "react"
-import type { Firestore } from "firebase/firestore"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { doc, getDoc, onSnapshot, type Firestore } from "firebase/firestore"
+import { httpsCallable, type Functions } from "firebase/functions"
 import type { FirebaseStorage } from "firebase/storage"
+import { LISTA_INICIAL, listaDe, type ListaBancos } from "../cobro/bancos.ts"
+import {
+  DialogoAyuda,
+  DialogoDuplicado,
+  DialogoEfectivoActivo,
+  DialogoFalloQr,
+  DialogoNoEsperado,
+  HojaBancos,
+  HojaTicket,
+  PantallaQr,
+  PantallaVencido,
+} from "../cobro/pantallas.tsx"
+import { debeEscuchar, desfaseReloj, restanteCobro } from "../cobro/reloj.ts"
+import { primerAviso } from "../cobro/vistas.ts"
 import logo from "../acceso/activos/logo-yakedo.svg"
 import iconoRegresar from "../acceso/activos/icono-regresar.svg"
 import {
@@ -15,6 +30,7 @@ import {
   estaAgotado,
   etiquetaConfirmarEfectivo,
   etiquetaIntento,
+  pastillaIntento,
   diaChip,
   fechaBarra,
   fechaEnMexico,
@@ -103,7 +119,47 @@ import {
 } from "./repositorio.ts"
 
 type Motivo = "primera" | "tramite" | null
-type Vista = "venta" | "editar" | "producto" | "cobrar" | "efectivo" | "yaquedo" | "historial"
+type Vista = "venta" | "editar" | "producto" | "cobrar" | "efectivo" | "yaquedo" | "historial" | "qr" | "vencido"
+
+interface CobroPantalla {
+  pedidoId: string
+  cobroId: string
+  qrString: string
+  creadoEn: number
+  venceEn: number
+  desfase: number
+  mismo: boolean
+  otro: boolean
+}
+
+interface AvisoPago {
+  clase: "duplicado" | "no_esperado"
+  numero: number
+  monto: number
+  pedidoId: string
+  id: string
+}
+
+const CLAVE_RELOJ = "yakedo-reloj"
+
+function guardarDesfase(cobroId: string, desfase: number) {
+  try {
+    const mapa = JSON.parse(sessionStorage.getItem(CLAVE_RELOJ) || "{}") as Record<string, number>
+    mapa[cobroId] = desfase
+    sessionStorage.setItem(CLAVE_RELOJ, JSON.stringify(mapa))
+  } catch {
+    // El reloj sigue en memoria si el navegador bloquea la sesión.
+  }
+}
+
+function leerDesfase(cobroId: string): number {
+  try {
+    const mapa = JSON.parse(sessionStorage.getItem(CLAVE_RELOJ) || "{}") as Record<string, number>
+    return typeof mapa[cobroId] === "number" ? mapa[cobroId] : 0
+  } catch {
+    return 0
+  }
+}
 
 interface Forma {
   id: string | null
@@ -144,6 +200,7 @@ export function Nucleo({
   nombre,
   db,
   storage,
+  functions,
   motivo,
   avisoRevision,
   pedirEdicion,
@@ -155,6 +212,7 @@ export function Nucleo({
   nombre: string
   db: Firestore
   storage: FirebaseStorage
+  functions: Functions
   motivo: Motivo
   avisoRevision: boolean
   pedirEdicion: boolean
@@ -186,6 +244,20 @@ export function Nucleo({
   const [dialogoCancelar, setDialogoCancelar] = useState<PedidoLeido | null>(null)
   const [retomar, setRetomar] = useState<PedidoLeido | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [cobroUi, setCobroUi] = useState<CobroPantalla | null>(null)
+  const [restante, setRestante] = useState(0)
+  const [hojaBancos, setHojaBancos] = useState(false)
+  const [listaBancos, setListaBancos] = useState<ListaBancos>(LISTA_INICIAL)
+  const [ayudaBanco, setAyudaBanco] = useState(false)
+  const [avisoEfectivo, setAvisoEfectivo] = useState(false)
+  const [queEs, setQueEs] = useState(false)
+  const [verTicket, setVerTicket] = useState(false)
+  const [falloQr, setFalloQr] = useState(false)
+  const [avisoPago, setAvisoPago] = useState<AvisoPago | null>(null)
+  const vistos = useRef(new Set<string>())
+  const consultado = useRef<string | null>(null)
+  const crearQr = useMemo(() => httpsCallable(functions, "crearCobroQr"), [functions])
+  const vencerQr = useMemo(() => httpsCallable(functions, "vencerCobro"), [functions])
   const camara = useRef<HTMLInputElement>(null)
   const galeria = useRef<HTMLInputElement>(null)
   const ahora = Date.now()
@@ -205,7 +277,19 @@ export function Nucleo({
   }
 
   async function recargarPedidos() {
-    setPedidos(await leerPedidos(db, uid))
+    const lista = await leerPedidos(db, uid)
+    setPedidos(lista)
+    const aviso = primerAviso(lista, vistos.current)
+    if (aviso && !avisoPago) setAvisoPago(aviso)
+  }
+
+  async function cargarBancos() {
+    try {
+      const snap = await getDoc(doc(db, "config", "bancosCodi"))
+      if (snap.exists()) setListaBancos(listaDe(snap.data()))
+    } catch {
+      setListaBancos(LISTA_INICIAL)
+    }
   }
 
   useEffect(() => {
@@ -236,6 +320,53 @@ export function Nucleo({
       window.clearTimeout(cierre)
     }
   }, [vista, pedidoCobro?.id])
+
+  useEffect(() => {
+    if (!cobroUi || vista !== "qr") return
+    const tick = () => {
+      const queda = restanteCobro(cobroUi.venceEn, Date.now(), cobroUi.desfase)
+      setRestante(queda)
+      if (queda <= 0) setVista("vencido")
+    }
+    tick()
+    const id = window.setInterval(tick, 250)
+    return () => window.clearInterval(id)
+  }, [cobroUi, vista])
+
+  useEffect(() => {
+    if (!cobroUi || !debeEscuchar(vista, restanteCobro(cobroUi.venceEn, Date.now(), cobroUi.desfase))) return
+    const referencia = doc(db, "negocios", uid, "pedidos", cobroUi.pedidoId, "cobros", cobroUi.cobroId)
+    return onSnapshot(referencia, (snap) => {
+      if (snap.get("estado") !== "pagado") return
+      setPedidoCobro((actual) => (actual ? { ...actual, estado: "Pagado", metodo: "codi", pagadoEn: Date.now() } : actual))
+      setVista("yaquedo")
+    })
+  }, [cobroUi, vista, db, uid])
+
+  useEffect(() => {
+    if (vista !== "vencido" || !cobroUi || consultado.current === cobroUi.cobroId) return
+    consultado.current = cobroUi.cobroId
+    void vencerQr({ pedidoId: cobroUi.pedidoId, cobroId: cobroUi.cobroId })
+      .then((resultado) => {
+        const datos = resultado.data as { estado?: string }
+        if (datos.estado === "pagado") {
+          setPedidoCobro((actual) => (actual ? { ...actual, estado: "Pagado", metodo: "codi", pagadoEn: Date.now() } : actual))
+          setVista("yaquedo")
+        } else if ((datos.estado === "duplicado" || datos.estado === "no-esperado") && pedidoCobro) {
+          setAvisoPago({
+            clase: datos.estado === "duplicado" ? "duplicado" : "no_esperado",
+            numero: pedidoCobro.numero,
+            monto: pedidoCobro.total,
+            pedidoId: pedidoCobro.id,
+            id: `respaldo_${cobroUi.cobroId}`,
+          })
+        }
+        void recargarPedidos()
+      })
+      .catch(() => undefined)
+    // La consulta de respaldo corre una vez por cobro, cuando el reloj llega a cero.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vista, cobroUi])
 
   function exigirLinea(): boolean {
     if (enLinea()) return true
@@ -326,6 +457,81 @@ export function Nucleo({
     })
     setVista("yaquedo")
     void recargarPedidos()
+  }
+
+  function quedaQr(): number {
+    if (!cobroUi) return 0
+    return restanteCobro(cobroUi.venceEn, Date.now(), cobroUi.desfase)
+  }
+
+  function irAEfectivo() {
+    if (quedaQr() > 0) {
+      setAvisoEfectivo(true)
+      setHojaBancos(false)
+      setAyudaBanco(false)
+      setQueEs(false)
+      return
+    }
+    setRecibido(0)
+    setTeclas("")
+    setHojaBancos(false)
+    setAyudaBanco(false)
+    setFalloQr(false)
+    setVista("efectivo")
+  }
+
+  function mostrarMismo(pedido: PedidoLeido) {
+    const cobro = pedido.cobros.find((item) => item.id === pedido.cobroActivoId)
+    if (!cobro?.qrString) return
+    setCobroUi({
+      pedidoId: pedido.id,
+      cobroId: cobro.id,
+      qrString: cobro.qrString,
+      creadoEn: cobro.creadoEn,
+      venceEn: cobro.venceEn,
+      desfase: leerDesfase(cobro.id),
+      mismo: true,
+      otro: false,
+    })
+    setPedidoCobro(pedido)
+    setRetomar(null)
+    setPanel(false)
+    setVista("qr")
+  }
+
+  async function elegirCodi() {
+    if (!pedidoCobro || !exigirLinea() || motivo !== null) return
+    setFalloQr(false)
+    try {
+      const resultado = await crearQr({ pedidoId: pedidoCobro.id })
+      const datos = resultado.data as {
+        cobroId: string
+        qrString: string
+        creadoEn: number
+        venceEn: number
+        horaServidor: number
+        otroCobro: boolean
+      }
+      const aparato = Date.now()
+      const desfase = desfaseReloj(datos.horaServidor, aparato)
+      guardarDesfase(datos.cobroId, desfase)
+      consultado.current = null
+      setCobroUi({
+        pedidoId: pedidoCobro.id,
+        cobroId: datos.cobroId,
+        qrString: datos.qrString,
+        creadoEn: datos.creadoEn,
+        venceEn: datos.venceEn,
+        desfase,
+        mismo: false,
+        otro: datos.otroCobro,
+      })
+      setPedidoCobro({ ...pedidoCobro, cobroActivoId: datos.cobroId })
+      setVista("qr")
+      void recargarPedidos()
+    } catch {
+      setFalloQr(true)
+    }
   }
 
   async function confirmarCancelar() {
@@ -701,7 +907,7 @@ export function Nucleo({
               <strong>{cobrarVista.efectivo}</strong>
               <span>{cobrarVista.efectivoAyuda}</span>
             </button>
-            <button className={cobrarVista.codiHabilitado ? "n-metodo" : "n-metodo n-metodo-apagado"} type="button" disabled={!cobrarVista.codiHabilitado}>
+            <button className={cobrarVista.codiHabilitado ? "n-metodo" : "n-metodo n-metodo-apagado"} type="button" disabled={!cobrarVista.codiHabilitado} onClick={() => void elegirCodi()}>
               <Icono nombre="qr" tamano={40} />
               {cobrarVista.codiPastilla ? <em>{cobrarVista.codiPastilla}</em> : null}
               <strong>{cobrarVista.codi}</strong>
@@ -761,6 +967,34 @@ export function Nucleo({
             </button>
           </aside>
         </main>
+      ) : null}
+
+      {vista === "qr" && cobroUi && pedidoCobro ? (
+        <PantallaQr
+          numero={pedidoCobro.numero}
+          piezas={piezas(pedidoCobro.items)}
+          totalCentavos={pedidoCobro.total}
+          creadoEn={cobroUi.creadoEn}
+          venceEn={cobroUi.venceEn}
+          restanteMs={restante}
+          mismo={cobroUi.mismo}
+          otro={cobroUi.otro}
+          destacados={listaBancos.destacados}
+          qrString={cobroUi.qrString}
+          alVolver={() => setVerTicket(true)}
+          alBancos={() => { setHojaBancos(true); void cargarBancos() }}
+          alAyuda={() => setAyudaBanco(true)}
+        />
+      ) : null}
+
+      {vista === "vencido" && pedidoCobro ? (
+        <PantallaVencido
+          numero={pedidoCobro.numero}
+          totalCentavos={pedidoCobro.total}
+          alCarrito={() => { setLineas([]); setCobroUi(null); setVista("venta") }}
+          alOtra={() => void elegirCodi()}
+          alEfectivo={irAEfectivo}
+        />
       ) : null}
 
       {vista === "yaquedo" && pedidoCobro ? (
@@ -917,10 +1151,66 @@ export function Nucleo({
             <p>Muestra el mismo QR. Si haces otro, serían dos cobros.</p>
             <p>Vence en {textoEstado(retomar, Date.now()).replace("Cobrando ", "")} · a las {horaMexico(retomar.cobros.find((cobro) => cobro.id === retomar.cobroActivoId)?.venceEn ?? Date.now())}</p>
             <button className="boton-secundario" type="button" onClick={() => { setPedidoCobro(retomar); setRetomar(null); setPanel(false); setVista("cobrar") }}>{TEXTO_OTRO_METODO}</button>
-            {/* Sección 3: este botón no llama a POST /codi/qr ni abre el QR. */}
-            <button className="boton-principal" type="button">{TEXTO_MISMO_QR}</button>
+            <button className="boton-principal" type="button" onClick={() => mostrarMismo(retomar)}>{TEXTO_MISMO_QR}</button>
           </div>
         </div>
+      ) : null}
+      {hojaBancos ? (
+        <HojaBancos
+          lista={listaBancos}
+          alCerrar={() => setHojaBancos(false)}
+          alEfectivo={irAEfectivo}
+        />
+      ) : null}
+      {ayudaBanco && cobroUi ? (
+        <DialogoAyuda
+          restanteMs={Math.max(0, quedaQr())}
+          venceEn={cobroUi.venceEn}
+          alEfectivo={irAEfectivo}
+          alVolver={() => setAyudaBanco(false)}
+        />
+      ) : null}
+      {avisoEfectivo && cobroUi ? (
+        <DialogoEfectivoActivo
+          restanteMs={Math.max(0, quedaQr())}
+          venceEn={cobroUi.venceEn}
+          queEs={queEs}
+          alQueEs={() => setQueEs(true)}
+          alSeguir={() => { setAvisoEfectivo(false); setQueEs(false) }}
+          alConfirmar={() => {
+            setAvisoEfectivo(false)
+            setQueEs(false)
+            setRecibido(0)
+            setTeclas("")
+            setVista("efectivo")
+          }}
+        />
+      ) : null}
+      {verTicket && pedidoCobro ? <HojaTicket pedido={pedidoCobro} alCerrar={() => setVerTicket(false)} /> : null}
+      {falloQr ? (
+        <DialogoFalloQr alReintentar={() => void elegirCodi()} alEfectivo={irAEfectivo} />
+      ) : null}
+      {avisoPago?.clase === "no_esperado" ? (
+        <DialogoNoEsperado
+          numero={avisoPago.numero}
+          monto={avisoPago.monto}
+          alVer={() => {
+            vistos.current.add(avisoPago.id)
+            setDetalleId(avisoPago.pedidoId)
+            setVista("historial")
+            setAvisoPago(null)
+          }}
+          alCerrar={() => {
+            vistos.current.add(avisoPago.id)
+            setAvisoPago(null)
+          }}
+        />
+      ) : null}
+      {avisoPago?.clase === "duplicado" ? (
+        <DialogoDuplicado alCerrar={() => {
+          vistos.current.add(avisoPago.id)
+          setAvisoPago(null)
+        }} />
       ) : null}
       {error ? <p className="n-error-flotante">{error}</p> : null}
     </div>
@@ -1120,8 +1410,12 @@ function Detalle({ pedido, ahora, alCancelar }: { pedido: PedidoLeido; ahora: nu
           <h3>Intentos de cobro</h3>
           <ul>
             {pedido.cobros.map((item) => (
-              // UI PROVISIONAL: el texto exacto de un intento vencido sigue pendiente de Diseño.
-              <li key={item.id}>{horaMexico(item.creadoEn)} · {etiquetaIntento(item, ahora)}</li>
+              <li key={item.id}>
+                <span>{horaMexico(item.creadoEn)}</span>
+                <span>QR en pantalla</span>
+                <span>{etiquetaIntento(item, ahora)}</span>
+                <em>{pastillaIntento(item, ahora)}</em>
+              </li>
             ))}
           </ul>
         </div>

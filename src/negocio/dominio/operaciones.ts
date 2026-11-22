@@ -1,6 +1,7 @@
 import { entidadPey, MAX_NOMBRE, MAX_NOMBRE_LEGAL, TEXTO_CLABE_IGUAL, TEXTO_CLABE_REPETIDA, TEXTO_PEY_ALTA, type TipoPersona } from "./alta.ts"
 import { revisarClabe } from "./clabe.ts"
 import { tramiteAbierto, type BloqueCuenta, type CuentaDocumento } from "./cuenta.ts"
+import { leerPagoQr } from "../../cobro/pey-qr.ts"
 import { ErrorPey, leerEventoPey, type ClientePey, type SolicitudCuenta } from "./pey.ts"
 import type { RepositorioNegocio } from "./repositorio.ts"
 
@@ -14,6 +15,9 @@ export type CodigoError =
   | "ya-hay-negocio"
   | "sin-tramite"
   | "clabe-igual"
+  | "sin-pedido"
+  | "cerrado"
+  | "sin-cuenta"
 
 export class ErrorDeNegocio extends Error {
   readonly codigo: CodigoError
@@ -222,7 +226,8 @@ export async function recibirEvento(
   id: string,
   cuerpo: string,
   repo: RepositorioNegocio,
-): Promise<"repetido" | "cuenta" | "cobro" | "ignorado" | "incompleto"> {
+  ahora = Date.now(),
+): Promise<"repetido" | "cuenta" | "ignorado" | "incompleto" | "normal" | "duplicado" | "no-esperado" | "ya-aplicado" | "sin-asignar"> {
   let json: unknown
   try {
     json = JSON.parse(cuerpo) as unknown
@@ -237,9 +242,12 @@ export async function recibirEvento(
     await repo.aplicarEstado(evento.bankAccountId, evento.estado)
     return "cuenta"
   }
-  const esCobro = evento.tipo === "codi.qr.payment_received"
-  const toma = await repo.tomarWebhook(id, evento.tipo || "desconocido", esCobro ? evento.datos : null)
+  if (evento.tipo === "codi.qr.payment_received") {
+    const pago = leerPagoQr(json)
+    if (!pago) return "incompleto"
+    return repo.resolverPagoQr(id, pago, ahora)
+  }
+  const toma = await repo.tomarWebhook(id, evento.tipo || "desconocido", null)
   if (toma === "repetido") return "repetido"
-  if (esCobro) return "cobro"
   return "ignorado"
 }

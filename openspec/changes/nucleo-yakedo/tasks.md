@@ -26,16 +26,16 @@
 
 ## 3. Cobro con CoDi y Pey
 
-- [ ] 3.1 Función `crearCobroQr` con `expiration` de 360 y `bankAccountId`. Verificación: prueba con Pey simulado que revisa el cuerpo enviado.
-- [ ] 3.2 Pantalla del QR con reloj de 360 s, línea de bancos y advertencia de no anular. Verificación: prueba del reloj con hora simulada, incluido un aparato con la hora mal.
-- [ ] 3.3 Cobro vencido, «Cobrar otra vez» y «Es otro cobro. Que pague solo uno.» Verificación: pruebas de cada pantalla.
-- [ ] 3.4 Función `webhookPey`: firma Standard Webhooks sobre el cuerpo crudo, idempotencia por `webhook-id`, 200 solo con firma válida. Verificación: pruebas con firmas válidas, inválidas y reintentos.
-- [ ] 3.5 Resolución de pagos en transacción: normal (incluido el webhook de un QR que Yakedo ya dio por vencido con el pedido Pendiente), duplicado y no esperado. Verificación: pruebas de cada fila de la tabla de `design.md`, incluidos dos webhooks simultáneos.
-- [ ] 3.6 Avisos y textos de pago no esperado y pago duplicado. Verificación: pruebas de pantalla con los textos aprobados.
-- [ ] 3.7 «Mejor cobrar en efectivo» con un QR activo y el aviso «El QR sigue activo 4:12 min. Pídele que ya no lo escanee.» Verificación: prueba del cambio de método sin duplicar el pedido.
-- [ ] 3.8 Ayuda cuando el banco del cliente falla. Verificación: prueba de pantalla.
-- [ ] 3.9 Consulta de respaldo del cobro solo en el servidor (por ejemplo al vencer el reloj), sin botón «Revisar pago». Verificación: prueba con respuesta simulada `PAID` y prueba de que la tablet escucha el cobro solo mientras está activo.
-- [ ] 3.10 Pagos sin asignar y efectivo en transacción contra un pago CoDi simultáneo. Verificación: pruebas. Depende de P23.
+- [x] 3.1 Función `crearCobroQr` con `expiration` de 360 y `bankAccountId`. Verificación: prueba con Pey simulado que revisa el cuerpo enviado.
+- [x] 3.2 Pantalla del QR con reloj de 360 s, línea de bancos y advertencia de no anular. Verificación: prueba del reloj con hora simulada, incluido un aparato con la hora mal.
+- [x] 3.3 Cobro vencido, «Cobrar otra vez» y «Es otro cobro. Que pague solo uno.» Verificación: pruebas de cada pantalla.
+- [x] 3.4 Función `webhookPey`: firma Standard Webhooks sobre el cuerpo crudo, idempotencia por `webhook-id`, 200 solo con firma válida. Verificación: pruebas con firmas válidas, inválidas y reintentos.
+- [x] 3.5 Resolución de pagos en transacción: normal (incluido el webhook de un QR que Yakedo ya dio por vencido con el pedido Pendiente), duplicado y no esperado. Verificación: pruebas de cada fila de la tabla de `design.md`, incluidos dos webhooks simultáneos.
+- [x] 3.6 Avisos y textos de pago no esperado y pago duplicado. Verificación: pruebas de pantalla con los textos aprobados.
+- [x] 3.7 «Mejor cobrar en efectivo» con un QR activo y el aviso «El QR sigue activo 4:12 min. Pídele que ya no lo escanee.» Verificación: prueba del cambio de método sin duplicar el pedido.
+- [x] 3.8 Ayuda cuando el banco del cliente falla. Verificación: prueba de pantalla.
+- [x] 3.9 Consulta de respaldo del cobro solo en el servidor (por ejemplo al vencer el reloj), sin botón «Revisar pago». Verificación: prueba con respuesta simulada `PAID` y prueba de que la tablet escucha el cobro solo mientras está activo.
+- [x] 3.10 Pagos sin asignar y efectivo en transacción contra un pago CoDi simultáneo. Verificación: pruebas. Depende de P23.
 
 ## 4. Cobro libre
 
@@ -45,8 +45,8 @@
 
 ## 5. Lista de bancos con CoDi (ROD-382)
 
-- [ ] 5.1 Crear `config/bancosCodi` con la lista inicial del 17 de noviembre de 2026. Verificación: el documento existe y sus campos coinciden con la spec. Depende de P18.
-- [ ] 5.2 Línea corta, hoja de bancos y «Mejor cobrar en efectivo». Verificación: pruebas de pantalla con la lista cargada.
+- [x] 5.1 Crear `config/bancosCodi` con la lista inicial del 17 de noviembre de 2026. Verificación: el documento existe y sus campos coinciden con la spec. Depende de P18.
+- [x] 5.2 Línea corta, hoja de bancos y «Mejor cobrar en efectivo». Verificación: pruebas de pantalla con la lista cargada.
 - [ ] 5.3 Lista nueva sin republicar. Verificación: cambiar el documento en la consola y reabrir la hoja.
 
 ## 6. Pruebas productivas y entrega (ROD-372)

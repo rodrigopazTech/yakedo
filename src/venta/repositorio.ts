@@ -271,6 +271,8 @@ export async function leerPedidos(db: Firestore, uid: string): Promise<PedidoLei
             venceEn: millis(cuerpo.venceEn),
             estado: estadoCobro(cuerpo.estado),
             pagos,
+            qrString: typeof cuerpo.qrString === "string" ? cuerpo.qrString : null,
+            codiQrId: typeof cuerpo.codiQrId === "string" ? cuerpo.codiQrId : null,
           }
         }),
       )

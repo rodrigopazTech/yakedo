@@ -12,6 +12,7 @@ import {
   registrarNegocio as registrar,
   type EntradaAlta,
 } from "../../src/negocio/dominio/operaciones.ts"
+import { crearCobroQr as crearQr, vencerReloj } from "../../src/cobro/operaciones.ts"
 import { crearClientePey } from "../../src/negocio/dominio/pey.ts"
 import { verificarFirma } from "../../src/negocio/dominio/firma.ts"
 import type { TipoPersona } from "../../src/negocio/dominio/alta.ts"
@@ -19,9 +20,8 @@ import type { TipoPersona } from "../../src/negocio/dominio/alta.ts"
 /**
  * Pey solo se llama desde aquí. PEY_API_KEY y PEY_WEBHOOK_SECRET
  * salen de Secret Manager (defineSecret). No están en el repositorio.
- * Los cobros (`codi.qr.payment_received`) se guardan en `eventosCobro`
- * para resolverlos en las tareas 3.4 y 3.5; este webhook ya verifica
- * la firma y la idempotencia.
+ * El webhook verifica la firma y, dentro de una transacción, resuelve
+ * `codi.qr.payment_received`. No responde 200 si la firma falla.
  */
 setGlobalOptions({ maxInstances: 10 })
 initializeApp()
@@ -102,6 +102,30 @@ export const cambiarClabe = onCall({ secrets: [peyApiKey] }, async (request) => 
       cliente(),
     )
     return { ok: true, cuenta }
+  } catch (error) {
+    throw traducir(error)
+  }
+})
+
+export const crearCobroQr = onCall({ secrets: [peyApiKey] }, async (request) => {
+  try {
+    const datos = request.data && typeof request.data === "object" ? (request.data as Record<string, unknown>) : {}
+    const pedidoId = texto(datos.pedidoId)
+    if (!pedidoId) throw new ErrorDeNegocio("datos", "Falta el pedido.")
+    return await crearQr(uidDe(request), pedidoId, almacenFirestore(), cliente(), () => Date.now())
+  } catch (error) {
+    throw traducir(error)
+  }
+})
+
+/** El reloj de la tablet lo llama al llegar a cero. No es un botón de revisar pago. */
+export const vencerCobro = onCall({ secrets: [peyApiKey] }, async (request) => {
+  try {
+    const datos = request.data && typeof request.data === "object" ? (request.data as Record<string, unknown>) : {}
+    const pedidoId = texto(datos.pedidoId)
+    const cobroId = texto(datos.cobroId)
+    if (!pedidoId || !cobroId) throw new ErrorDeNegocio("datos", "Falta el cobro.")
+    return await vencerReloj(uidDe(request), pedidoId, cobroId, almacenFirestore(), cliente(), Date.now())
   } catch (error) {
     throw traducir(error)
   }

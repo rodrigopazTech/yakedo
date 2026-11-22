@@ -1906,3 +1906,189 @@ button.ajustes-fila {
   width: 420px;
   margin-top: 16px;
 }
+
+.n-qr {
+  min-height: 100%;
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--color-fondo);
+  text-align: center;
+}
+
+.n-qr .n-encabezado {
+  align-self: stretch;
+}
+
+.n-qr h1,
+.n-vencido h2 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+.n-qr-caja {
+  display: grid;
+  place-items: center;
+  width: 286px;
+  height: 286px;
+  margin: 8px 0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(28, 25, 21, 0.06);
+}
+
+.n-qr-caja img {
+  width: 250px;
+  height: 250px;
+}
+
+.n-qr-linea,
+.n-qr-indica,
+.n-qr-advierte {
+  max-width: 520px;
+  margin: 8px 0;
+  color: var(--color-tinta);
+  line-height: 1.4;
+}
+
+.n-qr-indica,
+.n-qr-advierte {
+  color: var(--color-tinta-suave);
+  font-size: 14px;
+}
+
+.n-qr-enlace {
+  border: 0;
+  background: transparent;
+  color: var(--color-marca);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.n-reloj {
+  position: relative;
+  width: min(400px, 100%);
+  margin: 12px 0;
+  padding: 16px 18px 20px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-acento-suave);
+  color: var(--color-marca);
+  font-weight: 700;
+}
+
+.n-reloj strong {
+  font-size: 28px;
+}
+
+.n-reloj i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--color-marca);
+}
+
+.n-reloj-rojo {
+  background: var(--color-peligro-suave);
+  color: var(--color-peligro);
+}
+
+.n-qr-nota {
+  width: min(400px, 100%);
+  margin: 8px 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--sombra-toast);
+}
+
+.n-vencido .boton-principal,
+.n-vencido .boton-secundario,
+.n-dialogo-largo .boton-principal,
+.n-dialogo-largo .boton-secundario {
+  width: min(420px, 100%);
+}
+
+.n-alerta {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 24px 0 8px;
+  border-radius: 50%;
+  background: var(--color-peligro-suave);
+  color: var(--color-peligro);
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.n-hoja {
+  width: min(600px, 100%);
+  height: 100%;
+  margin-left: auto;
+  padding: 28px;
+  overflow: auto;
+  background: #fff;
+  text-align: left;
+}
+
+.n-hoja header,
+.n-hoja footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.n-hoja header button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 24px;
+}
+
+.n-bancos {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, auto);
+  gap: 10px 24px;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+}
+
+.n-bancos li::before {
+  content: "✓ ";
+  color: var(--color-marca);
+}
+
+.n-bancos-mas::before {
+  content: "" !important;
+}
+
+.n-bancos-aviso {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff4e5;
+}
+
+.n-dialogo-largo {
+  max-width: 520px;
+  text-align: left;
+}
+
+.n-dialogo-largo ol {
+  padding-left: 20px;
+}
+
+.n-detalle li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

@@ -14,5 +14,6 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "../src/negocio/dominio"]
+  "include": ["src", "../src/negocio/dominio", "../src/cobro", "../src/venta/dominio.ts"],
+  "exclude": ["**/*.test.ts", "../src/cobro/**/*.tsx"]
 }

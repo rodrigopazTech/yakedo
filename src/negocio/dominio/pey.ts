@@ -1,5 +1,13 @@
 import type { EstadoCuentaPey } from "./cuenta.ts"
 import { esEstadoPey } from "./cuenta.ts"
+import {
+  cuerpoCrearQr,
+  leerQrConsultado,
+  leerQrCreado,
+  type QrConsultado,
+  type QrCreado,
+  type SolicitudQr,
+} from "../../cobro/pey-qr.ts"
 
 export const PEY_BASE = "https://api.pey.mx"
 
@@ -33,6 +41,8 @@ export class ErrorPey extends Error {
 export interface ClientePey {
   crearCuenta(solicitud: SolicitudCuenta): Promise<CuentaCreada>
   consultarCuenta(bankAccountId: string): Promise<CuentaConsultada>
+  crearQr(solicitud: SolicitudQr): Promise<QrCreado>
+  consultarQr(codiQrId: string): Promise<QrConsultado>
 }
 
 function comoObjeto(valor: unknown): Record<string, unknown> {
@@ -159,6 +169,21 @@ export function crearClientePey(opciones: {
     async consultarCuenta(bankAccountId) {
       const json = await llamar(`/bank-account/${encodeURIComponent(bankAccountId)}`, { method: "GET" })
       return leerCuentaConsultada(json, bankAccountId)
+    },
+    async crearQr(solicitud) {
+      const cuerpo = cuerpoCrearQr(solicitud)
+      const json = await llamar("/codi/qr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cuerpo),
+      })
+      const qr = leerQrCreado(json)
+      if (!qr) throw new ErrorPey(200, "Pey no devolvió el QR.")
+      return qr
+    },
+    async consultarQr(codiQrId) {
+      const json = await llamar(`/transaction/codi/qr/${encodeURIComponent(codiQrId)}`, { method: "GET" })
+      return leerQrConsultado(json)
     },
   }
 }
