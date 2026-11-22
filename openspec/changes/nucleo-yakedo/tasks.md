@@ -5,11 +5,11 @@
 - [x] 1.3 Entrada con teléfono (+52, 10 números, código de 6 números) con los textos de error aprobados. Verificación: pruebas del flujo con el emulador de Auth. Bloqueada hasta que Rodrigo active Blaze.
 - [x] 1.4 Entrada con Google como atajo, persistencia de la sesión y vinculación con el teléfono por correo: pedir el correo (y su confirmación) después de entrar con teléfono si no lo tiene; si el correo de Google coincide, es la misma cuenta; si entra primero con Google y luego con teléfono, vincular el número desde Ajustes. Verificación: pruebas de los cuatro escenarios de acceso-y-negocio (mismo correo, correos distintos, Google primero, correo ya guardado). Los textos esperan a Diseño UI/UX.
 - [x] 1.5 Cerrar sesión con sus dos variantes de texto y bloqueo con un cobro activo. Verificación: prueba con y sin cobro activo.
-- [ ] 1.6 Reglas de Firestore y de Storage por negocio y su suite de pruebas con el emulador (propio, ajeno, sin sesión, config de solo lectura, fotos). Verificación: la suite pasa.
+- [x] 1.6 Reglas de Firestore y de Storage por negocio y su suite de pruebas con el emulador (propio, ajeno, sin sesión, config de solo lectura, fotos). Verificación: la suite pasa.
 - [x] 1.7 `.env.example`, revisión de `.gitignore` y revisión del historial sin secretos antes de publicar. Verificación: búsqueda de llaves en el repo sin resultados.
-- [ ] 1.8 Alta del negocio («Tu negocio»): CLABE, nombre del negocio (40 máximo), nombre legal y tipo de persona, sin RFC; unicidad de la CLABE. Verificación: pruebas de validación y de CLABE repetida. Depende de P13 y P14.
-- [ ] 1.9 Función `registrarNegocio` (`POST /bank-account`), `consultarCuenta` y recepción de `bank.account.updated`; CoDi apagado fuera de `ACTIVE`. Verificación: pruebas con respuestas simuladas de Pey. Depende de P7.
-- [ ] 1.10 «Tu negocio» en Ajustes y función `cambiarClabe` con cuenta nueva en trámite (elección de seguir con la cuenta actual, cambio al quedar `ACTIVE`, un cambio a la vez). Verificación: pruebas con Pey simulado de cada escenario. Los textos del aviso esperan a Diseño UI/UX.
+- [x] 1.8 Alta del negocio («Tu negocio»): CLABE, nombre del negocio (40 máximo), nombre legal y tipo de persona, sin RFC; unicidad de la CLABE. Verificación: pruebas de validación y de CLABE repetida. Depende de P13 y P14.
+- [x] 1.9 Función `registrarNegocio` (`POST /bank-account`), `consultarCuenta` y recepción de `bank.account.updated`; CoDi apagado fuera de `ACTIVE`. Verificación: pruebas con respuestas simuladas de Pey. Depende de P7.
+- [x] 1.10 «Tu negocio» en Ajustes y función `cambiarClabe` con cuenta nueva en trámite (elección de seguir con la cuenta actual, cambio al quedar `ACTIVE`, un cambio a la vez). Verificación: pruebas con Pey simulado de cada escenario. Los textos del aviso esperan a Diseño UI/UX.
 - [ ] 1.11 Documentación: README con cómo correr, probar y desplegar, sin secretos. Verificación: otra persona sigue el README en limpio.
 
 ## 2. Catálogo y núcleo de venta (ROD-386)

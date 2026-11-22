@@ -1,19 +1,18 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "target": "es2022",
-    "outDir": "lib",
-    "rootDir": "src",
     "strict": true,
-    "esModuleInterop": true,
+    "noEmit": true,
     "skipLibCheck": true,
-    "sourceMap": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true
   },
-  "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src", "../src/negocio/dominio"]
 }

@@ -394,6 +394,8 @@ export function PantallaAjustes({
   alConfirmarCierre,
   alVincular,
   alReenviarAviso,
+  seccionNegocio,
+  alCatalogo,
 }: {
   usuario: UsuarioSesion
   metodo: MetodoEntrada
@@ -408,13 +410,22 @@ export function PantallaAjustes({
   alConfirmarCierre: () => void
   alVincular: () => void
   alReenviarAviso: () => void
+  seccionNegocio?: ReactNode
+  alCatalogo?: () => void
 }) {
   const entroCon = textoEntrasteCon(usuario, metodo)
 
   return (
     <main className="ajustes">
       <header className="ajustes-encabezado">
-        <p className="ajustes-regreso">Catálogo</p>
+        {alCatalogo ? (
+          <button className="boton-regresar ajustes-regreso-boton" type="button" onClick={alCatalogo}>
+            <img src={iconoRegresar} alt="" width={22} height={22} />
+            Catálogo
+          </button>
+        ) : (
+          <p className="ajustes-regreso">Catálogo</p>
+        )}
         <div>
           <h1>Ajustes</h1>
         </div>
@@ -422,6 +433,7 @@ export function PantallaAjustes({
       <div className="ajustes-contenido">
         <section className="ajustes-tarjeta" aria-label="Tu negocio">
           <h2>Tu negocio</h2>
+          {seccionNegocio}
           <p className="ajustes-fila">
             <span>Entraste con</span>
             <strong>{entroCon}</strong>

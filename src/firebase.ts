@@ -5,8 +5,8 @@ import {
   getAuth,
   setPersistence,
 } from "firebase/auth";
-import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
-import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
+import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
+import { connectFunctionsEmulator, getFunctions, type Functions } from "firebase/functions";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { crearServicioFirebase } from "./acceso/servicio-firebase.ts";
 import type { ServicioAuth } from "./acceso/tipos.ts";
@@ -68,6 +68,12 @@ export function iniciarFirebase(): FirebaseApp | null {
 
   appIniciada = app;
   return app;
+}
+
+export function datosDeFirebase(): { db: Firestore; functions: Functions } | null {
+  const app = iniciarFirebase();
+  if (!app) return null;
+  return { db: getFirestore(app), functions: getFunctions(app) };
 }
 
 export function servicioDeAuth(): ServicioAuth | null {
