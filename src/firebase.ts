@@ -1,8 +1,15 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
-import { connectAuthEmulator, getAuth } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  connectAuthEmulator,
+  getAuth,
+  setPersistence,
+} from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
+import { crearServicioFirebase } from "./acceso/servicio-firebase.ts";
+import type { ServicioAuth } from "./acceso/tipos.ts";
 import {
   hayConfiguracionFirebase,
   leerConfiguracionFirebase,
@@ -16,22 +23,32 @@ const EMULADORES = {
   storage: { host: "127.0.0.1", puerto: 9199 },
 } as const;
 
+let appIniciada: FirebaseApp | null | undefined;
+let servicioIniciado: ServicioAuth | null | undefined;
+
 /**
- * Prepara Auth, Firestore, Functions y Storage.
- * Sin variables VITE_ no hace nada: la pantalla de prueba no necesita sesión.
- * En desarrollo, si hay configuración, habla con los emuladores locales.
+ * La sesión se queda en el navegador hasta que el comercio cierra sesión.
+ * En desarrollo el reCAPTCHA de teléfono no sale: el emulador no manda SMS.
  */
 export function iniciarFirebase(): FirebaseApp | null {
+  if (appIniciada !== undefined) return appIniciada;
+
   if (!hayConfiguracionFirebase()) {
+    appIniciada = null;
     return null;
   }
 
   const app = initializeApp(leerConfiguracionFirebase());
+  const auth = getAuth(app);
 
   if (import.meta.env.DEV) {
-    connectAuthEmulator(getAuth(app), EMULADORES.auth, {
-      disableWarnings: true,
-    });
+    connectAuthEmulator(auth, EMULADORES.auth, { disableWarnings: true });
+    auth.settings.appVerificationDisabledForTesting = true;
+  }
+
+  void setPersistence(auth, browserLocalPersistence);
+
+  if (import.meta.env.DEV) {
     connectFirestoreEmulator(
       getFirestore(app),
       EMULADORES.firestore.host,
@@ -49,5 +66,17 @@ export function iniciarFirebase(): FirebaseApp | null {
     );
   }
 
+  appIniciada = app;
   return app;
+}
+
+export function servicioDeAuth(): ServicioAuth | null {
+  if (servicioIniciado !== undefined) return servicioIniciado;
+  const app = iniciarFirebase();
+  if (!app) {
+    servicioIniciado = null;
+    return null;
+  }
+  servicioIniciado = crearServicioFirebase(getAuth(app));
+  return servicioIniciado;
 }

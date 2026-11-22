@@ -1,8 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto:wght@500&display=swap");
 
 /*
  * Único archivo de estilos de Yakedo.
- * Paleta y fuente de marca. El diseño de producto llega con Figma.
+ * Tokens de Figma (Fundamentos) y pantallas de acceso a 1280×800.
  * Pensado primero para tablet horizontal y escritorio: la fila no se parte.
  */
 
@@ -12,7 +12,34 @@
   --color-acento: #FFB020;
   --color-tinta: #1C1915;
   --color-fondo: #F4EFE6;
+  --color-accent: var(--color-marca);
+  --color-accent-strong: var(--color-marca-oscuro);
+  --color-highlight: var(--color-acento);
+  --color-text: var(--color-tinta);
+  --color-bg: var(--color-fondo);
+  --color-superficie: #ffffff;
+  --color-surface: #ffffff;
+  --color-superficie-suave: #ece5d8;
+  --color-surface-muted: #ece5d8;
+  --color-tinta-suave: #5a5248;
+  --color-text-secondary: #5a5248;
+  --color-borde: #e3dacb;
+  --color-border: #e3dacb;
+  --color-borde-fuerte: #cdc2af;
+  --color-border-strong: #cdc2af;
+  --color-peligro: #b3261e;
+  --color-danger: #b3261e;
+  --color-peligro-suave: #fef2f2;
+  --color-danger-soft: #fef2f2;
+  --color-sobre-marca: #ffffff;
+  --color-text-on-accent: #ffffff;
+  --color-overlay: rgba(28, 25, 21, 0.55);
+  --sombra-dialogo: 0 8px 24px 0 rgba(28, 25, 21, 0.18);
+  --sombra-toast: 0 6px 20px rgba(0, 0, 0, 0.2);
   --fuente-sans: "Plus Jakarta Sans", sans-serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --fuente-google: "Roboto", sans-serif;
+  --font-google: "Roboto", sans-serif;
   color-scheme: light;
 }
 
@@ -33,123 +60,539 @@ body {
   background: var(--color-fondo);
 }
 
-.prueba {
+button,
+input {
+  font: inherit;
+}
+
+.arranque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  min-height: 100%;
+  background: var(--color-marca);
+  color: var(--color-sobre-marca);
+}
+
+.arranque p {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.24px;
+}
+
+.arranque-logo {
+  width: 264px;
+  height: 72px;
+}
+
+.acceso {
   display: flex;
   flex-direction: row;
   align-items: stretch;
   width: 100%;
   min-height: 100%;
+  background: var(--color-fondo);
 }
 
-.prueba-lado {
-  flex: 0 0 18rem;
+.acceso-marca {
+  flex: 0 0 43.75%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 2.5rem 2rem;
-  background: var(--color-marca);
-  color: var(--color-fondo);
+  gap: 24px;
+  padding: 64px 64px 0;
+  background: var(--color-superficie-suave);
 }
 
-.prueba-lado h1 {
+.acceso-logo {
+  width: 176px;
+  height: 48px;
+}
+
+.acceso-lema {
+  max-width: 432px;
   margin: 0;
-  font-size: 2.75rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 40px;
+  letter-spacing: -0.96px;
 }
 
-.prueba-lado p {
-  margin: 0.85rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1.45;
-}
-
-.prueba-acento {
-  width: 4.5rem;
-  height: 0.45rem;
-  margin-top: 1.5rem;
-  border-radius: 999px;
-  background: var(--color-acento);
-}
-
-.prueba-pie {
+.acceso-apoyo,
+.acceso-nota,
+.acceso-subtitulo,
+.ajustes-tarjeta > p,
+.dialogo-cierre p {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--color-tinta-suave);
 }
 
-.prueba-cuerpo {
+.acceso-nota,
+.acceso-apoyo {
+  max-width: 432px;
+}
+
+.acceso-formulario {
   flex: 1;
-  padding: 2.5rem 2.75rem 3rem;
-}
-
-.prueba-cuerpo h2 {
-  margin: 0;
-  font-size: 1.85rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.prueba-cuerpo > p {
-  max-width: 40rem;
-  margin: 0.75rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.muestras {
   display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  margin: 2rem 0 0;
-  padding: 0;
-  list-style: none;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 100px;
+  background: var(--color-fondo);
 }
 
-.muestras > li {
-  flex: 1 1 0;
+.acceso-arriba .acceso-formulario {
+  justify-content: flex-start;
+  padding-top: 48px;
+}
+
+.acceso-columna {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: min(520px, 100%);
+}
+
+.acceso-columna h2,
+.dialogo-cierre h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.24px;
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--color-marca);
+  font-family: var(--fuente-sans);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.acceso-correo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.acceso-legal,
+.acceso-ayuda,
+.acceso-espera,
+.ajustes-bloqueo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-tinta-suave);
+}
+
+.acceso-espera,
+.acceso-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acceso-error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-peligro);
+}
+
+.acceso-separador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.acceso-separador span {
+  flex: 1;
+  height: 1px;
+  background: var(--color-borde-fuerte);
+}
+
+.acceso-separador p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--color-tinta-suave);
+}
+
+.boton-principal,
+.boton-google,
+.boton-secundario,
+.boton-cerrar,
+.boton-cancelar,
+.boton-confirmar-cierre {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 56px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.boton-principal {
+  border: 0;
+  background: var(--color-marca);
+  color: var(--color-sobre-marca);
+}
+
+.boton-apagado,
+.boton-cerrar-bloqueado {
+  background: var(--color-superficie-suave);
+  color: var(--color-tinta-suave);
+  border: 1.5px solid var(--color-borde);
+  cursor: pointer;
+}
+
+.boton-cerrar-bloqueado {
+  width: auto;
+  cursor: not-allowed;
+}
+
+.boton-principal:disabled,
+.boton-google:disabled,
+.boton-secundario:disabled {
+  cursor: not-allowed;
+}
+
+.boton-secundario,
+.boton-regresar,
+.boton-cerrar,
+.boton-cancelar {
+  border: 1.5px solid var(--color-borde-fuerte);
+  background: var(--color-superficie);
+  color: var(--color-tinta);
+}
+
+.boton-regresar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 18px 0 14px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.boton-cerrar {
+  width: auto;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.boton-google {
+  gap: 12px;
+  border: 1px solid #747775;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: var(--fuente-google);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.boton-fantasma,
+.boton-texto {
+  height: 56px;
+  padding: 0 24px;
+  border: 0;
+  background: transparent;
+  color: var(--color-marca);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.acceso-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.acceso-entrada {
+  display: flex;
+  height: 64px;
+  overflow: hidden;
+  border: 2px solid var(--color-marca);
+  border-radius: 12px;
+  background: var(--color-superficie);
+}
+
+.acceso-entrada-error {
+  border-color: var(--color-peligro);
+}
+
+.acceso-entrada-correo {
+  border: 1.5px solid var(--color-borde-fuerte);
+}
+
+.acceso-entrada-correo input {
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.acceso-prefijo {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 0 18px;
+  background: var(--color-superficie-suave);
+  color: var(--color-tinta-suave);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.acceso-entrada input {
+  flex: 1;
   min-width: 0;
+  border: 0;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--color-tinta);
+  caret-color: var(--color-marca);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
 }
 
-.muestra {
+.acceso-entrada input:focus {
+  outline: none;
+}
+
+.casillas {
+  position: relative;
+  display: flex;
+  gap: 12px;
+}
+
+.casilla {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 72px;
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 40px;
+  letter-spacing: -0.96px;
+}
+
+.casilla-activa {
+  border-width: 2px;
+  border-color: var(--color-marca);
+}
+
+.casilla-error {
+  border-width: 2px;
+  border-color: var(--color-peligro);
+}
+
+.casillas-entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  cursor: text;
+}
+
+.recaptcha-invisible {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.ajustes {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--color-fondo);
+}
+
+.ajustes-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 80px;
+  padding: 0 24px;
+  background: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.ajustes-encabezado h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.24px;
+}
+
+.ajustes-tarjeta h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.ajustes-catalogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px 0 12px;
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  color: var(--color-tinta);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.ajustes-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(680px, 100%);
+  padding: 24px;
+}
+
+.ajustes-tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  background: var(--color-superficie);
+}
+
+.ajustes-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.ajustes-fila span {
+  color: var(--color-tinta-suave);
+  font-weight: 400;
+}
+
+.ajustes-fila strong {
+  font-weight: 600;
+}
+
+.ajustes-bloqueo {
+  max-width: 36rem;
+}
+
+.ajustes-velo {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-overlay);
+}
+
+.dialogo-cierre {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(520px, calc(100% - 48px));
+  padding: 32px;
+  border-radius: 24px;
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-dialogo);
+}
+
+.dialogo-cuerpo,
+.dialogo-dato {
+  margin: 0;
+  color: var(--color-tinta);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.dialogo-dato,
+.dialogo-dato p {
+  font-weight: 600;
+}
+
+.dialogo-dato p {
   margin: 0;
 }
 
-.muestra-color {
-  width: 100%;
-  height: 7.5rem;
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, var(--color-tinta) 14%, transparent);
+.dialogo-dato p + p {
+  font-weight: 500;
 }
 
-.muestra figcaption {
-  margin-top: 0.75rem;
+.dialogo-acciones {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.muestra strong {
-  display: block;
-  font-size: 0.98rem;
-  font-weight: 700;
+.dialogo-acciones button {
+  flex: 1;
 }
 
-.muestra span {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+.dialogo-acciones-columna {
+  flex-direction: column;
 }
 
-.nota {
-  display: inline-block;
-  margin: 2.25rem 0 0;
-  padding: 0.7rem 1rem;
-  border-radius: 0.75rem;
-  background: var(--color-marca-oscuro);
-  color: var(--color-fondo);
-  font-size: 0.95rem;
-  font-weight: 600;
+.boton-confirmar-cierre {
+  border: 0;
+  background: var(--color-peligro-suave);
+  color: var(--color-peligro);
 }
